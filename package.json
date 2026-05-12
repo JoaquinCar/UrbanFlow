@@ -1,0 +1,14 @@
+{
+  "name": "urbanflow",
+  "version": "1.0.0",
+  "description": "Sistema de Gestión de Fraccionamiento",
+  "scripts": {
+    "dev:client": "cd client && npm run dev",
+    "dev:server": "cd server && npm run dev",
+    "install:all": "cd client && npm install && cd ../server && npm install"
+  },
+  "workspaces": [
+    "client",
+    "server"
+  ]
+}
