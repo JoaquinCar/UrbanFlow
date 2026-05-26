@@ -46,34 +46,54 @@ UrbanFlow/
 
 ### Requisitos
 - Node.js 20+
-- PostgreSQL 15+
+- Docker + Docker Compose
 
 ### Instalación
 
 ```bash
-# Clonar repo
+# 1. Clonar repo
 git clone https://github.com/JoaquinCar/UrbanFlow.git
 cd UrbanFlow
 
-# Instalar dependencias
+# 2. Levantar base de datos (PostgreSQL + pgAdmin)
+docker compose up -d
+
+# 3. Instalar dependencias
 cd client && npm install
 cd ../server && npm install
 
-# Configurar variables de entorno
+# 4. Configurar variables de entorno
 cp server/.env.example server/.env
 cp client/.env.example client/.env
-# Editar archivos .env con tus valores
+# Las credenciales de DB ya coinciden con docker-compose.yml
 
-# Crear base de datos
-psql -U postgres -c "CREATE DATABASE urbanflow;"
+# 5. Crear tablas
 cd server && npm run migrate
 
-# Iniciar en desarrollo
+# 6. Cargar datos de prueba
+npm run seed
+
+# 7. Iniciar en desarrollo
 # Terminal 1:
-cd server && npm run dev
+npm run dev          # servidor en http://localhost:3000
 # Terminal 2:
-cd client && npm run dev
+cd ../client && npm run dev   # frontend en http://localhost:5173
 ```
+
+### Usuarios de prueba (password: `UrbanFlow2026!`)
+
+| Email | Rol |
+|-------|-----|
+| admin@urbanflow.test | Admin |
+| vigilante@urbanflow.test | Vigilante |
+| propietario@urbanflow.test | Propietario |
+| tecnico@urbanflow.test | Técnico |
+
+### pgAdmin (GUI para la DB)
+- URL: http://localhost:5050
+- Email: `admin@urbanflow.test`
+- Password: `admin`
+- Servidor: host `postgres`, port `5432`, DB `urbanflow`, user `postgres`, password `urbanflow2026`
 
 ### Variables de entorno requeridas
 

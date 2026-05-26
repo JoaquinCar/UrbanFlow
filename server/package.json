@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "nodemon server.js",
     "start": "node server.js",
-    "migrate": "node shared/db/migrate.js"
+    "migrate": "node shared/db/migrate.js",
+    "seed": "node shared/db/seed.js"
   },
   "dependencies": {
     "bcrypt": "^5.1.0",
