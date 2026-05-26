@@ -55,30 +55,53 @@ UrbanFlow/
 git clone https://github.com/JoaquinCar/UrbanFlow.git
 cd UrbanFlow
 
-# 2. Levantar base de datos (PostgreSQL + pgAdmin)
-docker compose up -d
+# 2. Instalar dependencias (desde root — workspaces instala client + server)
+npm install
 
-# 3. Instalar dependencias
-cd client && npm install
-cd ../server && npm install
-
-# 4. Configurar variables de entorno
+# 3. Configurar variables de entorno
 cp server/.env.example server/.env
 cp client/.env.example client/.env
 # Las credenciales de DB ya coinciden con docker-compose.yml
+```
 
-# 5. Crear tablas
-cd server && npm run migrate
+> **Windows/PowerShell:** usa `Copy-Item server\.env.example server\.env` en lugar de `cp`
+
+```bash
+# 4. Abrir Docker Desktop y esperar que esté listo, luego:
+docker compose up -d
+# Verifica que esté healthy:
+docker ps
+
+# 5. Crear tablas (correr desde server/)
+cd server
+npm run migrate
 
 # 6. Cargar datos de prueba
 npm run seed
 
-# 7. Iniciar en desarrollo
-# Terminal 1:
-npm run dev          # servidor en http://localhost:3000
-# Terminal 2:
-cd ../client && npm run dev   # frontend en http://localhost:5173
+# 7. Volver al root e iniciar en desarrollo
+cd ..
 ```
+
+```bash
+# Terminal 1:
+npm run dev:server   # servidor en http://localhost:3000
+# Terminal 2:
+npm run dev:client   # frontend en http://localhost:5173
+```
+
+> **Nota — postgres local en conflicto:** Si tienes PostgreSQL instalado localmente, puede estar usando el puerto 5432 y bloquear la conexión al contenedor Docker. Detén el servicio local antes de levantar el proyecto:
+> - Windows: `Stop-Service -Name "postgresql-x64-17"` (como Administrador)
+> - O desde Servicios de Windows: busca `postgresql-x64-17` → Detener
+
+> **Nota — volumen viejo:** Si el contenedor existía con datos de otra instalación:
+> ```bash
+> docker compose down -v   # elimina volúmenes — borra todos los datos
+> docker compose up -d
+> cd server
+> npm run migrate
+> npm run seed
+> ```
 
 ### Usuarios de prueba (password: `UrbanFlow2026!`)
 
@@ -98,6 +121,28 @@ cd ../client && npm run dev   # frontend en http://localhost:5173
 ### Variables de entorno requeridas
 
 Ver `server/.env.example` y `client/.env.example`
+
+---
+
+## API — Endpoints implementados
+
+### Auth (`/api/auth`)
+
+| Método | Endpoint | Auth requerida | Descripción |
+|--------|----------|---------------|-------------|
+| POST | `/api/auth/login` | No | Login. Body: `{ email, password }`. Retorna `{ accessToken, user }` + cookie `refreshToken` (httpOnly) |
+| POST | `/api/auth/refresh` | No | Renueva el access token usando la cookie `refreshToken`. Retorna `{ accessToken }` |
+| POST | `/api/auth/logout` | No | Cierra sesión. Invalida refresh token en DB y limpia cookie |
+| GET | `/api/auth/me` | Bearer token | Retorna datos del usuario autenticado |
+
+**Uso desde el frontend:**
+- Guarda el `accessToken` en memoria (no en localStorage)
+- El `refreshToken` viaja solo en cookie httpOnly — el browser lo envía automáticamente
+- En cada request protegida: header `Authorization: Bearer <accessToken>`
+- Si el servidor retorna `401`, llama a `/api/auth/refresh` para obtener nuevo token
+- El objeto `user` del login contiene: `id`, `nombre`, `email`, `rol`, `fraccionamiento_id`
+
+**Roles disponibles:** `admin` | `vigilante` | `propietario` | `tecnico`
 
 ---
 
