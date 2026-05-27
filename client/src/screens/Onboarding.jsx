@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import MyButton from '../components/MyButton';
+import { useNavigate } from 'react-router-dom';
 
 const Onboarding = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
+  const navigate = useNavigate();
 
   // Datos de los 3 slides 
   const slides = [
@@ -40,7 +42,7 @@ const Onboarding = () => {
 
   const handleFinish = () => {
     console.log('Navegar a la pantalla de Login / Home');
-    
+    navigate('/CreateAccount'); // Navega a la pantalla de CreateAccount
   };
 
   return (

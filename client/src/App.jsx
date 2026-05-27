@@ -1,14 +1,11 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
-
-import SplashScreen from './screens/SplashScreen';
-import Onboarding from './screens/Onboarding';
+import { BrowserRouter } from 'react-router-dom'
 import './App.css';
 import React, { useState, useEffect } from 'react';
-
+import SplashScreen from './screens/SplashScreen';
+import AppRoutes from './Routes/Routes';
 
 function App() {
-
-    const [showSplash, setShowSplash] = useState(true);
+  const [showSplash, setShowSplash] = useState(true);
 
     useEffect(() => {
       const timer = setTimeout(() => {
@@ -19,9 +16,11 @@ function App() {
     }, []);
 
     return (
-      <div className="app-container">
-        {showSplash ? <SplashScreen /> : <Onboarding />}
-      </div>
+      <BrowserRouter>
+        <div className="app-container">
+          {showSplash ? <SplashScreen /> : <AppRoutes />}
+        </div>
+      </BrowserRouter>
     );
 }
 

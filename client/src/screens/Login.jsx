@@ -2,32 +2,26 @@ import React, { useState } from 'react';
 import MyButton from '../Components/MyButton';
 import InputField from '../Components/InputField';
 import { COLORS } from '../colors';
-import { HiUser, HiEnvelope, HiLockClosed } from 'react-icons/hi2';
+import { HiEnvelope, HiLockClosed } from 'react-icons/hi2';
 import './CreateAccount.css';
-import { Link, useNavigate} from 'react-router-dom';
+import { Link } from 'react-router-dom';
 
-const CreateAccount = () => {
+const Login = () => {
   const [formData, setFormData] = useState({
-    nombre: '',
     email: '',
     contraseña: '',
   });
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       [name]: value,
     }));
   };
 
-  const navigate = useNavigate();
-
-  const handleCreateAccount = () => {
-    console.log('Crear cuenta:', formData);
-    // Aquí irá la lógica para crear la cuenta
-
-    navigate('/NewAccount'); // Redirige a otro formulario o pantalla después de crear la cuenta
+  const handleSubmit = () => {
+    console.log('Enviar login:', formData);
   };
 
   const containerStyle = {
@@ -42,20 +36,12 @@ const CreateAccount = () => {
         <img src="/assets/logo_azul.png" alt="UrbanFlow Logo" />
       </div>
 
-      <h1 className="main-title">Crear nueva cuenta</h1>
-      <p className="subtitle">¡Estamos aquí para ayudarte!</p>
+      <h1 className="main-title">Inicio de Sesión</h1>
+      <p className="subtitle">Ingresa tu correo y contraseña.</p>
 
       <form className="auth-form">
         <InputField
-          placeholder="Nombre"
-          type="text"
-          icon={HiUser}
-          name="nombre"
-          value={formData.nombre}
-          onChange={handleChange}
-        />
-        <InputField
-          placeholder="E mail"
+          placeholder="Email"
           type="email"
           icon={HiEnvelope}
           name="email"
@@ -72,17 +58,16 @@ const CreateAccount = () => {
         />
 
         <div className="button-wrapper">
-          <MyButton onClick={handleCreateAccount}>Crear cuenta</MyButton>
+          <MyButton onClick={handleSubmit}>Enviar</MyButton>
         </div>
       </form>
 
-      <div className="divider-text">or</div>
-
       <div className="form-footer">
-        ¿Ya tienes una cuenta? <Link to="/login" className="regular-link">Iniciar sesión</Link>
+        <Link to="/LostPassword" className="regular-link">Recuperar contraseña</Link><br />
+        ¿No tienes cuenta? <Link to="/CreateAccount" className="regular-link">Crear cuenta</Link>
       </div>
     </div>
   );
 };
 
-export default CreateAccount;
+export default Login;

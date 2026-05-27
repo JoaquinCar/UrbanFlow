@@ -15,6 +15,7 @@ const InputField = ({
     flexDirection: 'column',
     gap: '0.5rem',
     marginBottom: '1rem',
+    width: '100%',
   };
 
   const labelStyle = {
@@ -26,11 +27,12 @@ const InputField = ({
   const inputWrapperStyle = {
     display: 'flex',
     alignItems: 'center',
-    gap: '0.75rem',
-    borderRadius: '0.5rem',
-    border: `1px solid ${COLORS.Grey}`,
-    padding: '0.75rem 1rem',
-    backgroundColor: COLORS.White,
+    gap: '0.5rem',
+    width: '100%',
+    borderRadius: '0.3rem',
+    border: `1px solid #D1D5DB`,
+    padding: '0.4rem 1rem',
+    backgroundColor: '#F9FAFB',
     transition: 'border-color 0.3s ease, box-shadow 0.3s ease',
   };
 
@@ -50,8 +52,8 @@ const InputField = ({
   };
 
   const iconStyle = {
-    color: COLORS.Blue,
-    fontSize: '1.25rem',
+    color: COLORS.Grey,
+    fontSize: '1rem',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
