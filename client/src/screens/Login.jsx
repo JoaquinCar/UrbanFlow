@@ -4,13 +4,17 @@ import InputField from '../Components/InputField';
 import { COLORS } from '../colors';
 import { HiEnvelope, HiLockClosed } from 'react-icons/hi2';
 import './CreateAccount.css';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import api from '../api';
 
 const Login = () => {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     email: '',
     contraseña: '',
   });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -18,10 +22,31 @@ const Login = () => {
       ...prev,
       [name]: value,
     }));
+    setError('');
   };
 
-  const handleSubmit = () => {
-    console.log('Enviar login:', formData);
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+
+    try {
+      const response = await api.post('/auth/login', {
+        email: formData.email,
+        password: formData.contraseña,
+      });
+
+      // Guardar token y datos del usuario
+      localStorage.setItem('access_token', response.data.access_token);
+      localStorage.setItem('user', JSON.stringify(response.data.user));
+
+      // Redirigir a dashboard
+      navigate('/dashboard');
+    } catch (err) {
+      setError(err.response?.data?.error || 'Error al iniciar sesión');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const containerStyle = {
@@ -39,7 +64,9 @@ const Login = () => {
       <h1 className="main-title">Inicio de Sesión</h1>
       <p className="subtitle">Ingresa tu correo y contraseña.</p>
 
-      <form className="auth-form">
+      {error && <p style={{ color: 'red', marginBottom: '15px' }}>{error}</p>}
+
+      <form className="auth-form" onSubmit={handleSubmit}>
         <InputField
           placeholder="Email"
           type="email"
@@ -47,6 +74,7 @@ const Login = () => {
           name="email"
           value={formData.email}
           onChange={handleChange}
+          required
         />
         <InputField
           placeholder="Contraseña"
@@ -55,10 +83,13 @@ const Login = () => {
           name="contraseña"
           value={formData.contraseña}
           onChange={handleChange}
+          required
         />
 
         <div className="button-wrapper">
-          <MyButton onClick={handleSubmit}>Enviar</MyButton>
+          <MyButton type="submit" disabled={loading}>
+            {loading ? 'Cargando...' : 'Enviar'}
+          </MyButton>
         </div>
       </form>
 

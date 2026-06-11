@@ -68,6 +68,7 @@ cp client/.env.example client/.env
 # Las credenciales de DB ya coinciden con docker-compose.yml
 
 # 5. Crear tablas
+psql -U postgres -c "CREATE DATABASE urbanflow;"
 cd server && npm run migrate
 
 # 6. Cargar datos de prueba

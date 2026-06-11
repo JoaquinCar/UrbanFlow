@@ -18,6 +18,7 @@ app.use(express.json())
 app.get('/api/health', (req, res) => res.json({ status: 'ok', env: process.env.NODE_ENV }))
 
 // Routes — uncomment as modules are implemented
+app.use('/api/auth', require('./modules/auth/auth.routes'))
 // const authRoutes = require('./modules/auth/auth.routes')
 // const fraccionamientoRoutes = require('./modules/fraccionamiento/fraccionamiento.routes')
 // const ownersRoutes = require('./modules/owners/owners.routes')

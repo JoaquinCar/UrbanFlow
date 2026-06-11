@@ -4,6 +4,8 @@ import InputField from '../Components/InputField';
 import { COLORS } from '../colors';
 import { HiUser, HiCalendar, HiPhone } from 'react-icons/hi2';
 import './CreateAccount.css';
+import { Link, useNavigate} from 'react-router-dom';
+
 
 const NewAccount = () => {
   const [formData, setFormData] = useState({
@@ -21,7 +23,10 @@ const NewAccount = () => {
     }));
   };
 
+  const navigate = useNavigate();
+  
   const handleSubmit = () => {
+    navigate('/dashboard');
     console.log('Enviar nueva cuenta:', formData);
   };
 

@@ -1,9 +1,12 @@
 const express = require('express')
 const router = express.Router()
-// const controller = require('./auth.controller')
-// const { authGuard } = require('../../shared/middleware/auth.middleware')
-// const { requireRole } = require('../../shared/middleware/role.middleware')
+const controller = require('./auth.controller')
+const { authGuard } = require('../../shared/middleware/auth.middleware')
 
-// TODO: define routes for module 'auth'
+// POST /api/auth/login
+router.post('/login', controller.login)
+
+// GET /api/auth/me (requiere autenticación)
+router.get('/me', authGuard, controller.me)
 
 module.exports = router
