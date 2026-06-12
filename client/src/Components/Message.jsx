@@ -37,7 +37,6 @@ export function Message() {
   return (
 
     <section>
-        <h3 className="section-title">Notificaciones</h3>
         <div className="notifications-list">
         {NOTIFICATIONS.map((notif) => (
             <div key={notif.id} className="notification-item">

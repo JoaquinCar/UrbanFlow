@@ -84,6 +84,8 @@ const Dashboard = () => {
           </div>
         </section>
 
+        <h3 className="section-title">Notificaciones</h3>
+
        <Message/>
 
       </main>

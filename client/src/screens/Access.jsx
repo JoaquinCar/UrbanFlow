@@ -1,12 +1,15 @@
 import React, { useState } from 'react';
-import { HiPlus, HiMapPin, HiUser, HiEnvelope } from 'react-icons/hi2';
+import { HiMapPin, HiUser, HiEnvelope, HiMiniArrowDownTray } from 'react-icons/hi2';
 import { QRCodeSVG } from 'qrcode.react';
 import { Header } from '../Components/Header';
 import { Modal } from '../Components/Modal';
+import { Tabs } from '../Components/Tabs';
+import { FloatButton } from '../Components/FloatButton';
 import './main.css';
 
 const TABS = ['Familiar', 'Visitantes', 'Historial'];
 
+//MockData
 const FAMILIAR_DATA = [
   { id: 1, nombre: 'Roberto Garza', rol: 'Padre de familia', ubicacion: 'Casa', tipo: 'Familiar permanente' },
   { id: 2, nombre: 'Elena Garza',   rol: 'Madre de familia', ubicacion: 'Casa', tipo: 'Familiar permanente' },
@@ -63,7 +66,7 @@ function QRModalContent({ item }) {
       <p className="qr-desc">{item.rol} · {item.ubicacion}</p>
       <div className="qr-actions">
         <button className="qr-btn qr-btn-dark">
-          <HiDownload size={18} /> Guardar imagen
+          <HiMiniArrowDownTray size={18} /> Guardar imagen
         </button>
         <button className="qr-btn qr-btn-cyan">
           <HiEnvelope size={18} /> Compartir en correo
@@ -95,7 +98,7 @@ function NewAccessModalContent({ onClose }) {
         <p className="qr-desc">{tipo === 'familiar' ? 'Familiar' : 'Visitante'} · Casa</p>
         <div className="qr-actions">
           <button className="qr-btn qr-btn-dark">
-            <HiDownload size={18} /> Guardar imagen
+            <HiMiniArrowDownTray size={18} /> Guardar imagen
           </button>
           <button className="qr-btn qr-btn-cyan">
             <HiEnvelope size={18} /> Compartir en correo
@@ -137,48 +140,35 @@ function NewAccessModalContent({ onClose }) {
   );
 }
 
+function TabPanel({ data, onVer }) {
+  if (data.length === 0) return <p className="access-empty">Sin registros</p>;
+  return data.map(item => (
+    <AccessCard
+      key={item.id}
+      item={item}
+      onVer={onVer}
+      onEliminar={() => {}}
+    />
+  ));
+}
+
 function Access() {
-  const [activeTab, setActiveTab] = useState(0);
   const [qrModal, setQrModal] = useState({ open: false, item: null });
   const [newModal, setNewModal] = useState(false);
-
-  const tabData = [FAMILIAR_DATA, VISITANTES_DATA, HISTORIAL_DATA];
-  const currentData = tabData[activeTab];
 
   return (
     <div className="dashboard-page">
       <Header />
 
-      <div className="access-tabs-bar">
-        {TABS.map((tab, i) => (
-          <button
-            key={tab}
-            className={`access-tab ${activeTab === i ? 'active' : ''}`}
-            onClick={() => setActiveTab(i)}
-          >
-            {tab}
-          </button>
-        ))}
-      </div>
+      <h1 className="section-title">Access </h1>
 
-      <div className="access-tab-content">
-        {currentData.length === 0 ? (
-          <p className="access-empty">Sin registros</p>
-        ) : (
-          currentData.map(item => (
-            <AccessCard
-              key={item.id}
-              item={item}
-              onVer={item => setQrModal({ open: true, item })}
-              onEliminar={() => {}}
-            />
-          ))
-        )}
-      </div>
+      <Tabs tabs={TABS}>
+        <TabPanel data={FAMILIAR_DATA}  onVer={item => setQrModal({ open: true, item })} />
+        <TabPanel data={VISITANTES_DATA} onVer={item => setQrModal({ open: true, item })} />
+        <TabPanel data={HISTORIAL_DATA}  onVer={item => setQrModal({ open: true, item })} />
+      </Tabs>
 
-      <button className="fab" onClick={() => setNewModal(true)} aria-label="Nuevo acceso">
-        <HiPlus size={28} color="#fff" />
-      </button>
+      <FloatButton onClick={() => setNewModal(true)} />
 
       <Modal
         isOpen={qrModal.open}
