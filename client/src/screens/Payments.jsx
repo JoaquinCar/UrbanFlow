@@ -140,7 +140,7 @@ function TabPanel({ data, onVer }) {
   ));
 }
 
-function Access() {
+function Payments() {
   const [qrModal, setQrModal] = useState({ open: false, item: null });
   const [newModal, setNewModal] = useState(false);
 
@@ -174,4 +174,4 @@ function Access() {
   );
 }
 
-export default Access;
+export default Payments;
