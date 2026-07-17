@@ -55,6 +55,10 @@ io.on('connection', (socket) => {
 // Make io accessible to route handlers
 app.set('io', io)
 
+// Cron jobs
+const { iniciarCronCuotas } = require('./shared/jobs/cuota-cron')
+iniciarCronCuotas()
+
 // Error handler
 const { errorHandler } = require('./shared/middleware/error.middleware')
 app.use(errorHandler)
