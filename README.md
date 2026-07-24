@@ -72,9 +72,9 @@ docker compose up -d
 # Verifica que esté healthy:
 docker ps
 
-# 5. Crear tablas (correr desde server/)
-cd server
-npm run migrate
+# 5. Crear tablas
+psql -U postgres -c "CREATE DATABASE urbanflow;"
+cd server && npm run migrate
 
 # 6. Cargar datos de prueba
 npm run seed
