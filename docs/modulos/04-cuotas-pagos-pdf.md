@@ -108,6 +108,24 @@ ON CONFLICT (referencia_mp) WHERE referencia_mp IS NOT NULL DO NOTHING
 
 Es parcial porque los pagos en efectivo y transferencia no tienen referencia.
 
+### El índice se pasó de estricto (migración 011)
+
+La 010 puso la condición `WHERE referencia_mp IS NOT NULL`. El problema es que
+esa columna **también** guarda la referencia de los cobros manuales: un folio de
+caja o un número de transferencia. Y esos sí se repiten legítimamente entre
+propietarios y periodos.
+
+El resultado era que el segundo cobro en efectivo con el mismo folio reventaba
+con `duplicate key value violates unique constraint`.
+
+La migración 011 acota el índice a `metodo = 'online'`, que es exactamente donde
+importa la idempotencia, y añade un índice normal para poder buscar por
+referencia en los cobros de caja.
+
+**Este fallo solo apareció al correr la suite completa**, no la de pagos
+aislada: hacía falta que dos cobros manuales distintos usaran el mismo folio.
+Es un buen argumento para ejecutar todas las suites juntas antes de cada PR.
+
 ### Códigos de respuesta del webhook
 
 - Firma inválida → **401**. Es el único caso en que queremos que MercadoPago

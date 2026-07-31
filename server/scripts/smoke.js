@@ -488,6 +488,19 @@ const SUITES = {
     })
     check('método de pago inválido → 400', r11.status === 400, r11.data)
 
+    // Regresión: la unicidad de referencia_mp debe aplicar solo a los pagos en
+    // línea. Dos cobros de caja con el mismo folio son legítimos.
+    const otraCuota = listado.data.items.find(
+      c => c.concepto === 'QA prueba extraordinaria' && c.id !== cuotaQa.id
+    )
+    if (otraCuota) {
+      const r11b = await req('POST', '/pagos/manual', {
+        token: ctx.admin,
+        body: { cuota_id: otraCuota.id, monto_pagado: 750, metodo: 'efectivo', referencia: 'QA-CAJA-01' },
+      })
+      check('dos cobros manuales pueden repetir folio de caja', r11b.status === 201, r11b.data)
+    }
+
     const r12 = await req('DELETE', `/pagos/cuotas/${cuotaQa.id}`, { token: ctx.admin })
     check('no se puede borrar una cuota con pagos → 409', r12.status === 409, r12.data)
 

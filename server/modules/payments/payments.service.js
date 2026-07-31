@@ -328,12 +328,15 @@ async function procesarWebhook(req) {
       return { ignorado: true, motivo: 'cuota inexistente' }
     }
 
-    // ON CONFLICT DO NOTHING sobre el índice único de la migración 010: hace el
-    // webhook idempotente frente a los reintentos de MercadoPago.
+    // ON CONFLICT DO NOTHING sobre el índice único de la migración 011: hace el
+    // webhook idempotente frente a los reintentos de MercadoPago. El índice
+    // está acotado a metodo='online' para no chocar con los folios de caja de
+    // los cobros manuales, que sí se repiten legítimamente.
     const { rowCount } = await client.query(
       `INSERT INTO pagos (cuota_id, monto_pagado, metodo, referencia_mp)
        VALUES ($1, $2, 'online', $3)
-       ON CONFLICT (referencia_mp) WHERE referencia_mp IS NOT NULL DO NOTHING`,
+       ON CONFLICT (referencia_mp) WHERE referencia_mp IS NOT NULL AND metodo = 'online'
+       DO NOTHING`,
       [cuotaId, pagoMp.transaction_amount, String(paymentId)]
     )
 
