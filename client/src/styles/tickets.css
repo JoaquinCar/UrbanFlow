@@ -1,0 +1,80 @@
+/* Tickets de mantenimiento.
+
+   Se muestran como tarjetas y no como tabla: la descripción es texto libre de
+   longitud variable y no cabe en una celda sin recortarla. */
+
+.ticket-lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.ticket-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  padding: 1rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.07);
+}
+
+.ticket-cabecera {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.ticket-fecha {
+  font-size: 0.74rem;
+  color: #9ca3af;
+}
+
+.ticket-borrar { margin-left: auto; }
+
+.ticket-descripcion {
+  margin: 0;
+  font-size: 0.92rem;
+  color: #111827;
+  line-height: 1.5;
+}
+
+.ticket-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 1rem;
+  font-size: 0.76rem;
+  color: #6b7280;
+}
+
+.ticket-sin-asignar {
+  color: #b45309;
+  font-weight: 600;
+}
+
+.ticket-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
+}
+
+.ticket-select {
+  flex: 1;
+  min-width: 160px;
+  font-size: 0.8rem;
+}
+
+.ticket-textarea {
+  resize: vertical;
+  min-height: 90px;
+  font-family: inherit;
+  line-height: 1.5;
+}
+
+@media (min-width: 768px) {
+  .ticket-select { flex: 0 0 auto; min-width: 200px; }
+}

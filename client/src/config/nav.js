@@ -32,7 +32,7 @@ export const NAV_ITEMS = [
   { label: 'Cuotas',              icon: HiBanknotes,             path: '/cuotas',        roles: ['admin'] },
   { label: 'Mi estado de cuenta', icon: HiBanknotes,             path: '/payments',      roles: ['propietario'] },
   { label: 'Mi acceso (QR)',      icon: HiQrCode,                path: '/access',        roles: ['propietario'] },
-  { label: 'Mantenimiento',       icon: HiWrenchScrewdriver,     path: '/mantenimiento', roles: ['admin', 'tecnico', 'propietario'],  pendiente: true },
+  { label: 'Mantenimiento',       icon: HiWrenchScrewdriver,     path: '/mantenimiento', roles: ['admin', 'tecnico', 'propietario'] },
   { label: 'Áreas comunes',       icon: HiCalendarDays,          path: '/reservas',      roles: ['admin', 'propietario'],             pendiente: true },
   { label: 'Comunicados',         icon: HiMegaphone,             path: '/comunicados',   roles: ['admin'],                            pendiente: true },
   { label: 'Notificaciones',      icon: HiBell,                  path: '/notifications', roles: ['admin', 'propietario', 'vigilante', 'tecnico'] },
@@ -50,7 +50,7 @@ export const HOME_BY_ROLE = {
   admin: '/dashboard',
   vigilante: '/caseta',
   propietario: '/dashboard',
-  tecnico: '/notifications',
+  tecnico: '/mantenimiento',
 }
 
 export function homeForRole(rol) {

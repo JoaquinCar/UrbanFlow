@@ -16,6 +16,7 @@ import Bitacora from '../screens/caseta/Bitacora';
 import Cuotas from '../screens/admin/Cuotas';
 import EstadoCuenta from '../screens/portal/EstadoCuenta';
 import PaymentResult from '../screens/PaymentResult';
+import Tickets from '../screens/Tickets';
 
 // Las rutas internas van en minúsculas. Las variantes en PascalCase que usaban
 // las pantallas viejas se redirigen para no romper enlaces existentes.
@@ -43,6 +44,11 @@ function AppRoutes() {
       <Route element={<RequireAuth />}>
         <Route path="/notifications" element={<Notifications />} />
         <Route path="/settings"      element={<Settings />} />
+      </Route>
+
+      {/* Una sola pantalla para los tres roles; el alcance lo decide el backend */}
+      <Route element={<RequireAuth allow={['admin', 'tecnico', 'propietario']} />}>
+        <Route path="/mantenimiento" element={<Tickets />} />
       </Route>
 
       <Route element={<RequireAuth allow={['admin', 'propietario']} />}>

@@ -342,6 +342,48 @@ async function seed() {
 
     console.log(`  ✓ cuotas       ${cuotasCreadas} (${pagosCreados} pagadas, ${morosos} moroso(s))`)
 
+    // ── Tickets de mantenimiento ─────────────────────────────────────────────
+    await client.query(
+      'DELETE FROM solicitudes_mantenimiento WHERE fraccionamiento_id = $1',
+      [fracId1]
+    )
+
+    const tecnicoId = porEmail['tecnico@urbanflow.test'].id
+    const adminId = porEmail['admin@urbanflow.test'].id
+    const solicitantes = propietarios.map(p => p.usuarioId)
+
+    // Dos de cada estado. Los resueltos llevan resuelto_at, que la restricción
+    // chk_ticket_resuelto exige que vaya siempre en pareja con el estado.
+    const TICKETS = [
+      { desc: 'La luminaria de la calle Palmas lleva tres noches apagada.', ubi: 'Calle Palmas, frente al A-04', estado: 'abierto',    tecnico: null,      dias: 2 },
+      { desc: 'Fuga de agua en la banqueta cerca del acceso principal.',     ubi: 'Acceso principal',            estado: 'abierto',    tecnico: null,      dias: 1 },
+      { desc: 'El portón automático tarda en cerrar y a veces se traba.',    ubi: 'Portón vehicular',            estado: 'en_proceso', tecnico: tecnicoId, dias: 6 },
+      { desc: 'La bomba de la alberca hace un ruido fuerte al arrancar.',    ubi: 'Área de alberca',             estado: 'en_proceso', tecnico: tecnicoId, dias: 4 },
+      { desc: 'Reposición de la malla ciclónica del área de juegos.',        ubi: 'Área de juegos',              estado: 'resuelto',   tecnico: tecnicoId, dias: 20 },
+      { desc: 'Poda de los árboles del camellón central.',                   ubi: 'Camellón central',            estado: 'resuelto',   tecnico: tecnicoId, dias: 12 },
+    ]
+
+    for (let i = 0; i < TICKETS.length; i++) {
+      const t = TICKETS[i]
+      // Los reportes de área común los levanta el administrador; los demás,
+      // los propietarios.
+      const solicitante = i % 3 === 0 ? adminId : solicitantes[i % solicitantes.length]
+
+      await client.query(
+        `INSERT INTO solicitudes_mantenimiento
+           (fraccionamiento_id, solicitante_id, tecnico_id, descripcion, ubicacion,
+            estado, created_at, resuelto_at)
+         VALUES ($1, $2, $3, $4, $5, $6::estado_ticket,
+                 NOW() - ($7 || ' days')::interval,
+                 CASE WHEN $6::estado_ticket = 'resuelto'
+                      THEN NOW() - ($7 || ' days')::interval + interval '2 days'
+                      ELSE NULL END)`,
+        [fracId1, solicitante, t.tecnico, t.desc, t.ubi, t.estado, t.dias]
+      )
+    }
+
+    console.log(`  ✓ tickets      ${TICKETS.length} de mantenimiento en los tres estados`)
+
     await client.query('COMMIT')
     console.log(`\nPassword para todos: ${DEFAULT_PASSWORD}`)
     console.log('Seed completado.')

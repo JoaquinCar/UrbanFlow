@@ -544,7 +544,10 @@ const SUITES = {
     }
 
     // ── checkout: sin credenciales debe fallar con un mensaje claro ──
-    const cuotaPendiente = listado.data.items.find(c => c.id !== cuotaQa.id)
+    // Se relee la lista: las pruebas anteriores ya pagaron algunas cuotas y una
+    // cuota pagada daría 409 antes de llegar a la comprobación de MercadoPago.
+    const pendientesAhora = await req('GET', '/pagos/cuotas?estado=pendiente&limit=500', { token: ctx.admin })
+    const cuotaPendiente = pendientesAhora.data.items[0]
     const r18 = await req('POST', '/pagos/checkout', {
       token: ctx.admin, body: { cuota_id: cuotaPendiente.id },
     })
@@ -579,6 +582,94 @@ const SUITES = {
     }
     check('limpieza de cuotas de prueba ejecutada', true)
   },
+
+  maintenance: async (ctx) => {
+    const r1 = await req('GET', '/mantenimiento', { token: ctx.admin })
+    check('lista de tickets con nombres resueltos',
+      r1.status === 200 && r1.data.total >= 6 && !!r1.data.items[0].solicitante_nombre,
+      r1.data?.items?.[0])
+    check('los abiertos salen primero',
+      r1.data.items[0].estado === 'abierto', r1.data?.items?.[0]?.estado)
+
+    const r2 = await req('GET', '/mantenimiento/tecnicos', { token: ctx.admin })
+    check('los técnicos vienen con su carga de trabajo',
+      r2.status === 200 && r2.data.length > 0 && typeof r2.data[0].tickets_activos === 'number',
+      r2.data?.[0])
+    const tecnicoId = r2.data?.[0]?.id
+
+    const r3 = await req('GET', '/mantenimiento', { token: ctx.propietario })
+    check('un propietario no puede listar todos los tickets → 403', r3.status === 403, r3.data)
+
+    // ── alta por el propietario ──
+    const r4 = await req('POST', '/mantenimiento', {
+      token: ctx.propietario,
+      body: { descripcion: 'QA: la reja de mi lote no cierra bien', ubicacion: 'Lote QA' },
+    })
+    check('el propietario reporta una incidencia → 201',
+      r4.status === 201 && r4.data.estado === 'abierto' && r4.data.resuelto_at === null, r4.data)
+    const ticketId = r4.data?.id
+
+    const r5 = await req('POST', '/mantenimiento', { token: ctx.propietario, body: { descripcion: '  ' } })
+    check('descripción vacía → 400', r5.status === 400, r5.data)
+
+    const r6 = await req('GET', '/mantenimiento/mios', { token: ctx.propietario })
+    check('el propietario ve sus propios reportes',
+      r6.status === 200 && r6.data.some(t => t.id === ticketId), r6.data?.length)
+
+    // ── asignación ──
+    const r7 = await req('PUT', `/mantenimiento/${ticketId}/asignar`, {
+      token: ctx.admin, body: { tecnico_id: ctx.adminId },
+    })
+    check('asignar a alguien que no es técnico → 400', r7.status === 400, r7.data)
+
+    const r8 = await req('PUT', `/mantenimiento/${ticketId}/asignar`, {
+      token: ctx.admin, body: { tecnico_id: tecnicoId },
+    })
+    check('asignar técnico pasa el ticket a en_proceso',
+      r8.status === 200 && r8.data.estado === 'en_proceso' && r8.data.tecnico_id === tecnicoId,
+      r8.data?.estado)
+
+    const r9 = await req('GET', '/mantenimiento/mios', { token: ctx.tecnico })
+    check('el técnico ve los tickets que le asignaron',
+      r9.status === 200 && r9.data.some(t => t.id === ticketId), r9.data?.length)
+
+    // ── ciclo de estados y la restricción de la base ──
+    const r10 = await req('PUT', `/mantenimiento/${ticketId}/estado`, {
+      token: ctx.tecnico, body: { estado: 'resuelto' },
+    })
+    check('el técnico resuelve y se registra resuelto_at',
+      r10.status === 200 && r10.data.estado === 'resuelto' && !!r10.data.resuelto_at, r10.data)
+
+    const r11 = await req('PUT', `/mantenimiento/${ticketId}/estado`, {
+      token: ctx.tecnico, body: { estado: 'en_proceso' },
+    })
+    check('reabrir limpia resuelto_at (chk_ticket_resuelto no lo permitiría al revés)',
+      r11.status === 200 && r11.data.estado === 'en_proceso' && r11.data.resuelto_at === null, r11.data)
+
+    const r12 = await req('PUT', `/mantenimiento/${ticketId}/estado`, {
+      token: ctx.tecnico, body: { estado: 'inventado' },
+    })
+    check('estado inválido → 400', r12.status === 400, r12.data)
+
+    // ── permisos entre técnicos y propietarios ──
+    const r13 = await req('PUT', `/mantenimiento/${ticketId}/estado`, {
+      token: ctx.propietario, body: { estado: 'resuelto' },
+    })
+    check('un propietario no cambia el estado → 403', r13.status === 403, r13.data)
+
+    const otroTicket = r1.data.items.find(t => t.tecnico_id !== tecnicoId && t.estado !== 'resuelto')
+    if (otroTicket) {
+      const r14 = await req('GET', `/mantenimiento/${otroTicket.id}`, { token: ctx.tecnico })
+      check('un técnico no ve tickets que no le tocan → 403', r14.status === 403, r14.status)
+    }
+
+    const r15 = await req('GET', `/mantenimiento/${ticketId}`, { token: ctx.propietario })
+    check('el solicitante sí puede ver su ticket', r15.status === 200, r15.status)
+
+    // ── limpieza ──
+    const r16 = await req('DELETE', `/mantenimiento/${ticketId}`, { token: ctx.admin })
+    check('el admin elimina el ticket → 204', r16.status === 204, r16.status)
+  },
 }
 
 async function main() {
@@ -598,6 +689,11 @@ async function main() {
     propietario: await login('propietario@urbanflow.test'),
     tecnico: await login('tecnico@urbanflow.test'),
   }
+
+  // Algunas pruebas necesitan el id del admin (por ejemplo, para comprobar que
+  // no se puede asignar un ticket a alguien que no es técnico).
+  const me = await req('GET', '/auth/me', { token: ctx.admin })
+  ctx.adminId = me.data.id
 
   for (const n of nombres) {
     console.log(`\n── ${n} ──`)
