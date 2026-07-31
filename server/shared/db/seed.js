@@ -229,6 +229,29 @@ async function seed() {
       await upsertLote(client, fracId2, lotesF2[i], estado, null)
     }
 
+    // Un seed debe dejar un estado CONOCIDO, no solo añadir lo suyo. Se
+    // eliminan propietarios y lotes que no estén en el catálogo de arriba:
+    // los que alguien haya creado probando la API desde Bruno o la interfaz.
+    // Al borrar el usuario caen en cascada su propietario, sus documentos y
+    // sus cuotas.
+    const correosCatalogo = usuarios.map(u => u.email)
+    const { rowCount: usuariosSobrantes } = await client.query(
+      `DELETE FROM usuarios
+       WHERE fraccionamiento_id = ANY($1) AND email <> ALL($2)`,
+      [[fracId1, fracId2], correosCatalogo]
+    )
+
+    const numerosCatalogo = [...lotesF1, ...lotesF2].map(l => l.numero)
+    const { rowCount: lotesSobrantes } = await client.query(
+      `DELETE FROM lotes
+       WHERE fraccionamiento_id = ANY($1) AND numero <> ALL($2)`,
+      [[fracId1, fracId2], numerosCatalogo]
+    )
+
+    if (usuariosSobrantes || lotesSobrantes) {
+      console.log(`  ✓ limpieza     ${usuariosSobrantes} usuario(s) y ${lotesSobrantes} lote(s) ajenos al seed`)
+    }
+
     console.log(`  ✓ lotes        ${lotesF1.length} en Las Palmas, ${lotesF2.length} en Jardines del Sol`)
     console.log(`  ✓ vendidos     ${vendidos} lotes con propietario asignado`)
 

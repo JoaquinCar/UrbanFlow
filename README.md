@@ -302,7 +302,7 @@ responden con un error explícito en lugar de simular éxito.
 
 ## pgAdmin
 
-- URL: http://localhost:5050 · `admin@urbanflow.test` / `admin`
+- URL: http://localhost:5050 · `admin@urbanflow.mx` / `admin`
 - Servidor: host `postgres`, puerto `5432`, BD `urbanflow`, usuario `postgres`,
   contraseña `urbanflow2026`
 
