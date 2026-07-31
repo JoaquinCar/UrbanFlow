@@ -22,7 +22,10 @@ services:
     container_name: urbanflow-pgadmin
     restart: unless-stopped
     environment:
-      PGADMIN_DEFAULT_EMAIL: admin@urbanflow.test
+      # No puede ser @urbanflow.test: pgAdmin valida el dominio y rechaza los
+      # reservados por la RFC 6761 (.test, .invalid, .example), entrando en
+      # bucle de reinicio. Es solo el usuario de acceso a pgAdmin.
+      PGADMIN_DEFAULT_EMAIL: admin@urbanflow.mx
       PGADMIN_DEFAULT_PASSWORD: admin
     ports:
       - "5050:80"
