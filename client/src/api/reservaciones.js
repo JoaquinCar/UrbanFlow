@@ -91,9 +91,12 @@ export function hhmm(hora) {
 export function fechaLegible(valor) {
   if (!valor) return '—'
   const iso = String(valor).slice(0, 10)
-  return new Date(`${iso}T12:00:00Z`).toLocaleDateString('es-MX', {
+  const texto = new Date(`${iso}T12:00:00Z`).toLocaleDateString('es-MX', {
     weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC',
   })
+  // Solo la primera letra. Con text-transform: capitalize en CSS saldría
+  // "Lunes, 14 De Septiembre", que en español es incorrecto.
+  return texto.charAt(0).toUpperCase() + texto.slice(1)
 }
 
 export function soloFecha(valor) {

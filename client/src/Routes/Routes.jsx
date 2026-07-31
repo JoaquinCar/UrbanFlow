@@ -1,5 +1,6 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { RequireAuth, SoloAnonimo } from './RequireAuth';
+import { useAuth } from '../context/AuthContext';
 import Onboarding from '../screens/Onboarding';
 import Login from '../screens/Login';
 import LostPassword from '../screens/LostPassword';
@@ -20,6 +21,7 @@ import Tickets from '../screens/Tickets';
 import Comunicados from '../screens/admin/Comunicados';
 import Areas from '../screens/admin/Areas';
 import Reservas from '../screens/portal/Reservas';
+import Portal from '../screens/portal/Portal';
 
 // Las rutas internas van en minúsculas. Las variantes en PascalCase que usaban
 // las pantallas viejas se redirigen para no romper enlaces existentes.
@@ -27,6 +29,13 @@ import Reservas from '../screens/portal/Reservas';
 // No hay registro público: en este producto el admin da de alta a los
 // propietarios (POST /api/propietarios crea también su usuario). Por eso
 // /CreateAccount y /NewAccount redirigen al login.
+// El propietario y el administrador comparten la ruta /dashboard pero no la
+// pantalla: uno ve su portal personal y el otro el panel de administración.
+function InicioSegunRol() {
+  const { rol } = useAuth();
+  return rol === 'propietario' ? <Portal /> : <Dashboard />;
+}
+
 function AppRoutes() {
   return (
     <Routes>
@@ -55,7 +64,7 @@ function AppRoutes() {
       </Route>
 
       <Route element={<RequireAuth allow={['admin', 'propietario']} />}>
-        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/dashboard" element={<InicioSegunRol />} />
       </Route>
 
       <Route element={<RequireAuth allow={['admin']} />}>
