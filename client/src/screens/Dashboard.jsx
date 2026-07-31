@@ -4,6 +4,7 @@ import { Header } from '../Components/Header';
 import { COLORS } from '../colors';
 import './main.css';
 import { Message } from '../Components/Message';
+import { useAuth } from '../context/AuthContext';
 
 import {
   HiUser,
@@ -17,10 +18,10 @@ import {
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  const { user } = useAuth();
 
-  const displayName = user.nombre || 'Usuario';
-  const displayRole = user.rol
+  const displayName = user?.nombre || 'Usuario';
+  const displayRole = user?.rol
     ? user.rol.charAt(0).toUpperCase() + user.rol.slice(1)
     : 'Residente';
 

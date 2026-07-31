@@ -1,0 +1,105 @@
+/* Tabla de las vistas admin.
+
+   En escritorio es una tabla normal. En móvil (<768px) cada fila se apila como
+   tarjeta y el encabezado de cada celda sale de data-label, porque una tabla de
+   6 columnas dentro del shell de 450px es ilegible. */
+
+.table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.data-table th {
+  text-align: left;
+  padding: 0.7rem 0.85rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #6b7280;
+  background: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
+  white-space: nowrap;
+}
+
+.data-table td {
+  padding: 0.75rem 0.85rem;
+  border-bottom: 1px solid #f3f4f6;
+  color: #374151;
+  vertical-align: middle;
+}
+
+.data-table tbody tr:hover { background: #f9fafb; }
+
+.data-row--clickable { cursor: pointer; }
+
+.table-error {
+  padding: 1rem;
+  border-radius: 12px;
+  background: #fef2f2;
+  color: #dc2626;
+  font-size: 0.88rem;
+}
+
+/* Badges de estado, compartidos por lotes, cuotas, tickets y reservaciones. */
+.badge {
+  display: inline-block;
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.badge--verde   { background: #dcfce7; color: #16a34a; }
+.badge--ambar   { background: #fef3c7; color: #b45309; }
+.badge--rojo    { background: #fef2f2; color: #dc2626; }
+.badge--azul    { background: #e0e7ff; color: #101483; }
+.badge--gris    { background: #f3f4f6; color: #6b7280; }
+
+@media (max-width: 767px) {
+  .data-table thead { display: none; }
+
+  .data-table,
+  .data-table tbody,
+  .data-table tr,
+  .data-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .data-table tr {
+    margin-bottom: 0.75rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    padding: 0.35rem 0.15rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.07);
+  }
+
+  .data-table td {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    border-bottom: none;
+    padding: 0.45rem 0.85rem;
+    text-align: right;
+  }
+
+  .data-table td::before {
+    content: attr(data-label);
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #9ca3af;
+    text-align: left;
+  }
+}

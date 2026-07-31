@@ -1,8 +1,7 @@
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
+import { RequireAuth, SoloAnonimo } from './RequireAuth';
 import Onboarding from '../screens/Onboarding';
-import CreateAccount from '../screens/CreateAccount';
 import Login from '../screens/Login';
-import NewAccount from '../screens/NewAccount';
 import LostPassword from '../screens/LostPassword';
 import Dashboard from '../screens/Dashboard';
 import Access from '../screens/Access';
@@ -10,21 +9,50 @@ import Notifications from '../screens/Notifications';
 import Owners from '../screens/Owners';
 import Payments from '../screens/Payments';
 import Settings from '../screens/Settings';
+import NotFound from '../screens/NotFound';
 
+// Las rutas internas van en minúsculas. Las variantes en PascalCase que usaban
+// las pantallas viejas se redirigen para no romper enlaces existentes.
+//
+// No hay registro público: en este producto el admin da de alta a los
+// propietarios (POST /api/propietarios crea también su usuario). Por eso
+// /CreateAccount y /NewAccount redirigen al login.
 function AppRoutes() {
   return (
     <Routes>
-      <Route path="/"               element={<Onboarding />} />
-      <Route path="/CreateAccount"  element={<CreateAccount />} />
-      <Route path="/Login"          element={<Login />} />
-      <Route path="/NewAccount"     element={<NewAccount />} />
-      <Route path="/LostPassword"   element={<LostPassword />} />
-      <Route path="/dashboard"      element={<Dashboard />} />
-      <Route path="/access"         element={<Access />} />
-      <Route path="/notifications"  element={<Notifications />} />
-      <Route path="/owners"         element={<Owners />} />
-      <Route path="/payments"       element={<Payments />} />
-      <Route path="/settings"       element={<Settings />} />
+      {/* Públicas */}
+      <Route element={<SoloAnonimo />}>
+        <Route path="/"              element={<Onboarding />} />
+        <Route path="/login"         element={<Login />} />
+        <Route path="/lost-password" element={<LostPassword />} />
+      </Route>
+
+      {/* Compatibilidad con las rutas PascalCase anteriores */}
+      <Route path="/Login"          element={<Navigate to="/login" replace />} />
+      <Route path="/LostPassword"   element={<Navigate to="/lost-password" replace />} />
+      <Route path="/CreateAccount"  element={<Navigate to="/login" replace />} />
+      <Route path="/NewAccount"     element={<Navigate to="/login" replace />} />
+
+      {/* Cualquier sesión iniciada */}
+      <Route element={<RequireAuth />}>
+        <Route path="/notifications" element={<Notifications />} />
+        <Route path="/settings"      element={<Settings />} />
+      </Route>
+
+      <Route element={<RequireAuth allow={['admin', 'propietario']} />}>
+        <Route path="/dashboard" element={<Dashboard />} />
+      </Route>
+
+      <Route element={<RequireAuth allow={['admin']} />}>
+        <Route path="/owners" element={<Owners />} />
+      </Route>
+
+      <Route element={<RequireAuth allow={['propietario']} />}>
+        <Route path="/payments" element={<Payments />} />
+        <Route path="/access"   element={<Access />} />
+      </Route>
+
+      <Route path="*" element={<NotFound />} />
     </Routes>
   );
 }

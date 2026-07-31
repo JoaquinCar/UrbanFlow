@@ -63,4 +63,22 @@ async function me(req, res, next) {
   }
 }
 
-module.exports = { login, refresh, logout, me }
+async function cambiarPassword(req, res, next) {
+  try {
+    const { passwordActual, passwordNueva } = req.body
+    if (!passwordActual || !passwordNueva) {
+      return res.status(400).json({ error: 'Contraseña actual y nueva requeridas' })
+    }
+    if (passwordNueva.length < 8) {
+      return res.status(400).json({ error: 'La nueva contraseña debe tener al menos 8 caracteres' })
+    }
+    await service.cambiarPassword(req.user.sub, passwordActual, passwordNueva)
+    // El refresh token quedó invalidado: la cookie vieja ya no sirve.
+    res.clearCookie('refreshToken', { path: '/api/auth' })
+    res.json({ message: 'Contraseña actualizada. Inicia sesión de nuevo.' })
+  } catch (err) {
+    next(err)
+  }
+}
+
+module.exports = { login, refresh, logout, me, cambiarPassword }

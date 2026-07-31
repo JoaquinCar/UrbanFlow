@@ -74,3 +74,17 @@
 .regular-link:hover {
   color: var(--color-primary);
 }
+
+/* Mensaje de error de los formularios de autenticación. Sustituye los
+   <p style={{color:'red'}}> que estaban en línea en cada pantalla. */
+.form-error {
+  width: 100%;
+  max-width: 400px;
+  margin: 0 auto 1rem;
+  padding: 0.7rem 0.9rem;
+  border-radius: 10px;
+  background: #fef2f2;
+  color: #dc2626;
+  font-size: 0.85rem;
+  text-align: left;
+}

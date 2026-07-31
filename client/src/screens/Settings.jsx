@@ -1,106 +1,148 @@
-import { COLORS } from '../colors';
-import { Header } from '../Components/Header';
-import './main.css';
 import React, { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import { HiUser, HiEnvelope, HiIdentification, HiLockClosed } from 'react-icons/hi2';
+import { Header } from '../Components/Header';
+import { Modal } from '../Components/Modal';
+import InputField from '../Components/InputField';
+import MyButton from '../Components/MyButton';
+import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
+import { cambiarPassword } from '../api/auth';
+import { mensajeDeError } from '../lib/apiError';
+import './main.css';
 
-import {
-  HiBars3,
-  HiXMark,
-  HiHome,
-  HiBanknotes,
-  HiBell,
-  HiUsers,
-  HiQrCode,
-  HiCog6Tooth,
-  HiArrowRightOnRectangle,
-} from 'react-icons/hi2';
-import '../screens/main.css';
+const ETIQUETA_ROL = {
+  admin: 'Administrador',
+  vigilante: 'Vigilante',
+  propietario: 'Propietario',
+  tecnico: 'Técnico',
+};
 
-const NAV_ITEMS = [
-  { label: 'Dashboard',       icon: HiHome,                    path: '/dashboard' },
-  { label: 'Pagos',           icon: HiBanknotes,               path: '/payments' },
-  { label: 'Notificaciones',  icon: HiBell,                    path: '/notifications' },
-  { label: 'Mi Acceso (QR)',  icon: HiQrCode,                  path: '/access' },
-  { label: 'Propietarios',    icon: HiUsers,                   path: '/owners' },
-  { label: 'Configuración',   icon: HiCog6Tooth,               path: '/settings' },
-];
-
-export function Settings() {
-  const [isOpen, setIsOpen] = useState(false);
+function Settings() {
   const navigate = useNavigate();
-  const location = useLocation();
+  const { user, rol, logout } = useAuth();
+  const toast = useToast();
 
-  const handleNavigate = (path) => {
-    navigate(path);
-    setIsOpen(false);
+  const [modalPassword, setModalPassword] = useState(false);
+  const [form, setForm] = useState({ passwordActual: '', passwordNueva: '', confirmar: '' });
+  const [guardando, setGuardando] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setForm(prev => ({ ...prev, [name]: value }));
+    setError('');
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('user');
-    navigate('/login');
+  const cerrarModal = () => {
+    setModalPassword(false);
+    setForm({ passwordActual: '', passwordNueva: '', confirmar: '' });
+    setError('');
+  };
+
+  const handleGuardarPassword = async (e) => {
+    e.preventDefault();
+    if (form.passwordNueva !== form.confirmar) {
+      setError('Las contraseñas nuevas no coinciden');
+      return;
+    }
+    setGuardando(true);
+    setError('');
+    try {
+      await cambiarPassword(form.passwordActual, form.passwordNueva);
+      cerrarModal();
+      toast.exito('Contraseña actualizada. Inicia sesión de nuevo.');
+      // El backend invalidó el refresh token, así que la sesión ya no sirve.
+      await logout();
+      navigate('/login', { replace: true });
+    } catch (err) {
+      setError(mensajeDeError(err));
+    } finally {
+      setGuardando(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    await logout();
+    navigate('/login', { replace: true });
   };
 
   return (
-    <>
-      <button
-        className="dashboard-header-btn"
-        onClick={() => setIsOpen(true)}
-        aria-label="Abrir menú"
-      >
-        <HiBars3 size={26} />
-      </button>
+    <div className="dashboard-page">
+      <Header />
 
-      {isOpen && (
-        <div
-          className="sidemenu-overlay"
-          onClick={() => setIsOpen(false)}
-        />
-      )}
+      <h1 className="section-title">Configuración</h1>
 
-      <nav className={`sidemenu-drawer ${isOpen ? 'open' : ''}`}>
-        <div className="sidemenu-header">
-          <div className="sidemenu-logo">
-            <img src="/assets/logo_azul.png" alt="UrbanFlow" />
+      <div className="settings-section">
+        <div className="settings-card">
+          <div className="settings-avatar">
+            <HiUser size={30} />
           </div>
-          <button
-            className="sidemenu-close"
-            onClick={() => setIsOpen(false)}
-            aria-label="Cerrar menú"
-          >
-            <HiXMark size={22} />
-          </button>
+          <div>
+            <p className="settings-nombre">{user?.nombre ?? '—'}</p>
+            <p className="settings-rol">{ETIQUETA_ROL[rol] ?? rol ?? '—'}</p>
+          </div>
         </div>
 
-        <div className="sidemenu-nav">
-          {NAV_ITEMS.map(({ label, icon: Icon, path }) => (
-            <button
-              key={path}
-              className={`sidemenu-item ${location.pathname === path ? 'active' : ''}`}
-              onClick={() => handleNavigate(path)}
-            >
-              <span className="sidemenu-item-icon">
-                <Icon size={20} />
-              </span>
-              {label}
-            </button>
-          ))}
+        <ul className="settings-list">
+          <li className="settings-item">
+            <span className="settings-item-icon"><HiEnvelope size={18} /></span>
+            <span className="settings-item-label">Correo</span>
+            <span className="settings-item-value">{user?.email ?? '—'}</span>
+          </li>
+          <li className="settings-item">
+            <span className="settings-item-icon"><HiIdentification size={18} /></span>
+            <span className="settings-item-label">Rol</span>
+            <span className="settings-item-value">{ETIQUETA_ROL[rol] ?? rol ?? '—'}</span>
+          </li>
+        </ul>
 
-          <hr className="sidemenu-divider" />
+        <button className="settings-action" onClick={() => setModalPassword(true)}>
+          <span className="settings-item-icon"><HiLockClosed size={18} /></span>
+          Cambiar contraseña
+        </button>
 
-          <button
-            className="sidemenu-item sidemenu-logout"
-            onClick={handleLogout}
-          >
-            <span className="sidemenu-item-icon">
-              <HiArrowRightOnRectangle size={20} />
-            </span>
-            Cerrar sesión
-          </button>
-        </div>
-      </nav>
-    </>
+        <button className="settings-action settings-action--peligro" onClick={handleLogout}>
+          Cerrar sesión
+        </button>
+      </div>
+
+      <Modal isOpen={modalPassword} onClose={cerrarModal} title="Cambiar contraseña">
+        <form className="new-access-form" onSubmit={handleGuardarPassword}>
+          {error && <p className="form-error">{error}</p>}
+
+          <InputField
+            placeholder="Contraseña actual"
+            type="password"
+            icon={HiLockClosed}
+            name="passwordActual"
+            value={form.passwordActual}
+            onChange={handleChange}
+          />
+          <InputField
+            placeholder="Nueva contraseña (mínimo 8 caracteres)"
+            type="password"
+            icon={HiLockClosed}
+            name="passwordNueva"
+            value={form.passwordNueva}
+            onChange={handleChange}
+          />
+          <InputField
+            placeholder="Confirmar nueva contraseña"
+            type="password"
+            icon={HiLockClosed}
+            name="confirmar"
+            value={form.confirmar}
+            onChange={handleChange}
+          />
+
+          <MyButton type="submit" disabled={guardando}>
+            {guardando ? 'Guardando…' : 'Guardar'}
+          </MyButton>
+        </form>
+      </Modal>
+    </div>
   );
 }
+
 export default Settings;

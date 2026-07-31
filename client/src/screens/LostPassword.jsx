@@ -1,26 +1,16 @@
-import React, { useState } from 'react';
+import React from 'react';
 import MyButton from '../Components/MyButton';
-import InputField from '../Components/InputField';
 import { COLORS } from '../colors';
-import { HiEnvelope } from 'react-icons/hi2';
+import { Link, useNavigate } from 'react-router-dom';
 import './CreateAccount.css';
 
+// El restablecimiento por correo depende del módulo de comunicados (Nodemailer)
+// y de un token de un solo uso, que todavía no existen. En lugar de un
+// formulario que no manda nada, esta pantalla dice la verdad: el admin
+// restablece la contraseña. Quien ya tiene sesión puede cambiarla en
+// Configuración.
 const LostPassword = () => {
-  const [formData, setFormData] = useState({
-    email: '',
-  });
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
-
-  const handleSubmit = () => {
-    console.log('Enviar recuperación:', formData);
-  };
+  const navigate = useNavigate();
 
   const containerStyle = {
     '--color-text': COLORS.Black,
@@ -35,22 +25,22 @@ const LostPassword = () => {
       </div>
 
       <h1 className="main-title">Recuperar tu contraseña</h1>
-      <p className="subtitle">Ingresa tu correo y recibiras un correo con instrucciones.</p>
+      <p className="subtitle">
+        Por seguridad, el restablecimiento lo hace la administración del
+        fraccionamiento. Escribe a la administración para que te asigne una
+        contraseña nueva.
+      </p>
+      <p className="subtitle">
+        Si aún puedes entrar a tu cuenta, cámbiala desde Configuración.
+      </p>
 
-      <form className="auth-form">
-        <InputField
-          placeholder="Email"
-          type="email"
-          icon={HiEnvelope}
-          name="email"
-          value={formData.email}
-          onChange={handleChange}
-        />
+      <div className="button-wrapper">
+        <MyButton onClick={() => navigate('/login')}>Volver a iniciar sesión</MyButton>
+      </div>
 
-        <div className="button-wrapper">
-          <MyButton onClick={handleSubmit}>Enviar</MyButton>
-        </div>
-      </form>
+      <div className="form-footer">
+        <Link to="/login" className="regular-link">Inicio de sesión</Link>
+      </div>
     </div>
   );
 };

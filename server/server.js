@@ -11,6 +11,10 @@ const io = new Server(httpServer, {
   cors: { origin: process.env.CLIENT_URL || 'http://localhost:5173', credentials: true },
 })
 
+// Detrás del proxy de Railway/Render, express-rate-limit necesita confiar en
+// X-Forwarded-For o limita por la IP del proxy (una sola para todo el mundo).
+app.set('trust proxy', 1)
+
 // Middleware
 app.use(cors({ origin: process.env.CLIENT_URL || 'http://localhost:5173', credentials: true }))
 app.use(express.json())
@@ -58,6 +62,12 @@ app.set('io', io)
 // Cron jobs
 const { iniciarCronCuotas } = require('./shared/jobs/cuota-cron')
 iniciarCronCuotas()
+
+// 404 — cualquier ruta /api no reconocida. Va antes del errorHandler para que
+// el cliente reciba JSON y no el HTML por defecto de Express.
+app.use((req, res) => {
+  res.status(404).json({ error: 'Ruta no encontrada' })
+})
 
 // Error handler
 const { errorHandler } = require('./shared/middleware/error.middleware')
