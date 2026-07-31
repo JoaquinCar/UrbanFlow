@@ -1,6 +1,7 @@
 require('dotenv').config()
 const bcrypt = require('bcrypt')
 const pool = require('./pool')
+const { generarQrToken } = require('../utils/qr')
 
 const SALT_ROUNDS = 12
 const DEFAULT_PASSWORD = process.env.SEED_PASSWORD || 'UrbanFlow2026!'
@@ -173,6 +174,14 @@ async function seed() {
     for (const p of propietarios) {
       const row = await upsertPropietario(client, p)
       propsCreados.push(row)
+
+      // El QR se siembra para que POST /api/visitas/qr sea probable justo
+      // después del seed, sin tener que pasar antes por el portal.
+      await client.query(
+        'UPDATE usuarios SET qr_token = $1 WHERE id = $2',
+        [generarQrToken(p.usuarioId, p.fracId), p.usuarioId]
+      )
+
       console.log(`  ✓ propietario  ${row.nombre_completo}`)
     }
 

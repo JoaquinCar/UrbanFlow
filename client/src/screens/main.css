@@ -798,40 +798,6 @@
   margin: 1rem 1.25rem 0;
 }
 
-/* Map tab */
-.owners-map-panel {
-  display: flex;
-  flex-direction: column;
-}
-
-.owners-map-wrapper {
-  position: relative;
-  height: 45vh;
-  min-height: 260px;
-}
-
-.owners-map-wrapper .leaflet-container {
-  height: 100%;
-  width: 100%;
-}
-
-.owners-map-label {
-  position: absolute;
-  top: 1rem;
-  left: 50%;
-  transform: translateX(-50%);
-  font-size: 1rem;
-  font-weight: 800;
-  letter-spacing: 0.12em;
-  color: #4b5563;
-  background: rgba(255, 255, 255, 0.82);
-  padding: 0.3rem 0.9rem;
-  border-radius: 999px;
-  z-index: 500;
-  pointer-events: none;
-  white-space: nowrap;
-}
-
 /* Owner grid cards (below map) */
 .owners-grid {
   display: grid;

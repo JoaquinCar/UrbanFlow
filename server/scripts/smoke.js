@@ -194,6 +194,112 @@ const SUITES = {
     const r16 = await req('GET', `/fraccionamiento/lotes/${loteId}`, { token: ctx.admin })
     check('el lote eliminado ya no existe → 404', r16.status === 404, r16.status)
   },
+
+  owners: async (ctx) => {
+    const r1 = await req('GET', '/propietarios', { token: ctx.admin })
+    check('lista de propietarios con lotes agregados',
+      r1.status === 200 && r1.data.total >= 3 && Array.isArray(r1.data.items[0].lotes), r1.data?.items?.[0])
+    check('la lista trae el email del usuario vinculado',
+      r1.data.items.every(p => !!p.email), r1.data?.items?.[0])
+
+    const r2 = await req('GET', '/propietarios/me', { token: ctx.propietario })
+    check('/me devuelve la ficha del propietario autenticado',
+      r2.status === 200 && r2.data.nombre_completo === 'Juan Pérez Domínguez', r2.data)
+    const miId = r2.data?.id
+
+    const r3 = await req('GET', '/propietarios/me', { token: ctx.admin })
+    check('/me no aplica al admin → 403', r3.status === 403, r3.data)
+
+    // ── aislamiento entre propietarios ──
+    const otro = r1.data.items.find(p => p.id !== miId)
+    const r4 = await req('GET', `/propietarios/${otro.id}`, { token: ctx.propietario })
+    check('un propietario no puede ver la ficha de otro → 403', r4.status === 403, r4.data)
+
+    const r5 = await req('GET', `/propietarios/${miId}`, { token: ctx.propietario })
+    check('un propietario sí puede ver la suya', r5.status === 200, r5.status)
+
+    const r6 = await req('GET', '/propietarios', { token: ctx.propietario })
+    check('un propietario no puede listar a todos → 403', r6.status === 403, r6.data)
+
+    // ── QR ──
+    const r7 = await req('GET', `/propietarios/${miId}/qr`, { token: ctx.propietario })
+    check('el QR devuelve token y data URL',
+      r7.status === 200 && r7.data.data_url?.startsWith('data:image/png;base64,'), Object.keys(r7.data ?? {}))
+    const qrOriginal = r7.data?.qr_token
+
+    const r8 = await req('GET', `/propietarios/${miId}/qr?format=png`, { token: ctx.propietario })
+    check('?format=png devuelve un PNG real',
+      r8.status === 200 && Buffer.isBuffer(r8.data) && r8.data.slice(1, 4).toString() === 'PNG', r8.status)
+
+    const r9 = await req('GET', `/propietarios/${otro.id}/qr`, { token: ctx.propietario })
+    check('no se puede pedir el QR de otro propietario → 403', r9.status === 403, r9.data)
+
+    const r10 = await req('POST', `/propietarios/${miId}/qr/rotar`, { token: ctx.admin })
+    check('rotar genera un QR distinto',
+      r10.status === 200 && r10.data.qr_token && r10.data.qr_token !== qrOriginal, r10.status)
+
+    // ── alta completa ──
+    const email = `qa-owner-${Date.now()}@urbanflow.test`
+    const r11 = await req('POST', '/propietarios', {
+      token: ctx.admin,
+      body: { nombre_completo: 'QA Propietario', email, telefono: '6670000000', whatsapp: '+526670000000' },
+    })
+    check('crear propietario → 201', r11.status === 201 && !!r11.data.id, r11.data)
+    const nuevoId = r11.data?.id
+
+    const r12 = await req('POST', '/propietarios', {
+      token: ctx.admin, body: { nombre_completo: 'Duplicado', email },
+    })
+    check('email duplicado → 409', r12.status === 409, r12.data)
+
+    const r13 = await req('POST', '/auth/login', { body: { email, password: PASSWORD } })
+    check('el usuario del propietario nuevo puede iniciar sesión',
+      r13.status === 200 && r13.data.user?.rol === 'propietario', r13.data?.user)
+
+    const r14 = await req('GET', `/propietarios/${nuevoId}/qr`, { token: ctx.admin })
+    check('el alta genera QR automáticamente', r14.status === 200 && !!r14.data.qr_token, r14.status)
+
+    // ── documentos ──
+    const pdfFalso = Buffer.concat([Buffer.from('%PDF-1.4\n'), Buffer.alloc(512, 0x20)])
+    const form = new FormData()
+    form.append('tipo', 'escritura')
+    form.append('archivo', new Blob([pdfFalso], { type: 'application/pdf' }), 'escritura firmada.pdf')
+
+    const r15 = await req('POST', `/propietarios/${nuevoId}/documentos`, { token: ctx.admin, form })
+    check('subir documento → 201 con metadatos',
+      r15.status === 201 && r15.data.nombre_archivo === 'escritura firmada.pdf' && r15.data.tamano_bytes > 0,
+      r15.data)
+    const docId = r15.data?.id
+
+    const formMalo = new FormData()
+    formMalo.append('tipo', 'ine')
+    formMalo.append('archivo', new Blob([Buffer.from('MZ')], { type: 'application/x-msdownload' }), 'virus.exe')
+    const r16 = await req('POST', `/propietarios/${nuevoId}/documentos`, { token: ctx.admin, form: formMalo })
+    check('tipo de archivo no permitido → 400', r16.status === 400, r16.data)
+
+    const r17 = await req('GET', `/propietarios/documentos/${docId}`, { token: ctx.admin })
+    check('descargar documento devuelve el PDF',
+      r17.status === 200 && Buffer.isBuffer(r17.data) && r17.data.slice(0, 4).toString() === '%PDF', r17.status)
+    check('la descarga conserva el nombre original',
+      /escritura%20firmada\.pdf/.test(r17.headers.get('content-disposition') ?? ''),
+      r17.headers.get('content-disposition'))
+
+    const r18 = await req('GET', `/propietarios/documentos/${docId}`, { token: ctx.propietario })
+    check('otro propietario no puede descargar el documento → 403', r18.status === 403, r18.data)
+
+    const r19 = await req('GET', `/propietarios/${nuevoId}/documentos`, { token: ctx.admin })
+    check('listar documentos del propietario', r19.status === 200 && r19.data.length === 1, r19.data)
+
+    // ── limpieza ──
+    const r20 = await req('DELETE', `/propietarios/documentos/${docId}`, { token: ctx.admin })
+    check('eliminar documento → 204', r20.status === 204, r20.status)
+
+    const r21 = await req('DELETE', `/propietarios/${nuevoId}`, { token: ctx.admin })
+    check('eliminar propietario → 204', r21.status === 204, r21.status)
+
+    const r22 = await req('POST', '/auth/login', { body: { email, password: PASSWORD } })
+    check('borrar el propietario borra también su usuario', r22.status === 401, r22.status)
+  },
 }
 
 async function main() {
