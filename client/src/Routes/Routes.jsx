@@ -10,6 +10,8 @@ import Owners from '../screens/Owners';
 import Payments from '../screens/Payments';
 import Settings from '../screens/Settings';
 import NotFound from '../screens/NotFound';
+import Lotes from '../screens/admin/Lotes';
+import Mapa from '../screens/admin/Mapa';
 
 // Las rutas internas van en minúsculas. Las variantes en PascalCase que usaban
 // las pantallas viejas se redirigen para no romper enlaces existentes.
@@ -45,6 +47,8 @@ function AppRoutes() {
 
       <Route element={<RequireAuth allow={['admin']} />}>
         <Route path="/owners" element={<Owners />} />
+        <Route path="/lotes"  element={<Lotes />} />
+        <Route path="/mapa"   element={<Mapa />} />
       </Route>
 
       <Route element={<RequireAuth allow={['propietario']} />}>
