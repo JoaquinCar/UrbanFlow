@@ -1,0 +1,100 @@
+/* Shell responsive.
+
+   Móvil (<768px): idéntico a como estaba — columna de 450px centrada.
+   Escritorio (≥768px): el drawer se ancla como barra lateral fija y el
+   contenido se ensancha, que es lo que necesitan las vistas de admin (tabla de
+   lotes, mapa SVG, dashboard de métricas). */
+
+/* Los selectores de abajo duplican la clase (.x.x) a propósito: suben la
+   especificidad a 0-2-0 para ganarle a las reglas base de screens/main.css sin
+   depender del orden en que Vite concatene las hojas. Con especificidad igual,
+   main.css a veces queda después y el menú anclado no se aplicaba. */
+@media (min-width: 768px) {
+  .app-container {
+    max-width: 100%;
+    box-shadow: none;
+    padding-left: 270px; /* ancho de .sidemenu-drawer */
+  }
+
+  /* El drawer deja de ser deslizable y queda anclado. */
+  .sidemenu-drawer.sidemenu-drawer {
+    transform: none;
+    transition: none;
+    box-shadow: 1px 0 0 #e5e7eb;
+    border-right: 1px solid #e5e7eb;
+  }
+
+  /* En escritorio el menú siempre está visible: sobran el botón de abrir, el de
+     cerrar y la capa oscura. */
+  .dashboard-header-btn--menu.dashboard-header-btn--menu,
+  .sidemenu-close.sidemenu-close,
+  .sidemenu-overlay.sidemenu-overlay {
+    display: none;
+  }
+
+  /* El header ya no necesita el hueco del hamburguesa a la izquierda. */
+  .dashboard-header.dashboard-header {
+    justify-content: flex-end;
+    gap: 1rem;
+    padding: 0.75rem 2rem;
+  }
+
+  .dashboard-logo {
+    margin-right: auto;
+  }
+
+  .section-title,
+  .dashboard-greeting,
+  .access-tab-content,
+  .dashboard-section {
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+
+  /* .access-tabs-bar es sticky con top: 57px (alto del header). Se mantiene. */
+  .contenido-ancho {
+    max-width: 1180px;
+    margin: 0 auto;
+    width: 100%;
+  }
+}
+
+/* Contenedor de acciones de una pantalla (buscador + botón "Nuevo"). */
+.page-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  align-items: center;
+  padding: 0 1.25rem 1rem;
+}
+
+.page-actions .page-search {
+  flex: 1;
+  min-width: 160px;
+  padding: 0.6rem 0.85rem;
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  background: #f9fafb;
+  color: #111827;
+}
+
+.page-actions .page-search:focus {
+  outline: none;
+  border-color: #101483;
+  background: #ffffff;
+}
+
+.page-select {
+  padding: 0.6rem 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  background: #f9fafb;
+  color: #111827;
+  cursor: pointer;
+}
+
+@media (min-width: 768px) {
+  .page-actions { padding: 0 2rem 1rem; }
+}

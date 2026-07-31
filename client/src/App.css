@@ -1,13 +1,27 @@
-/* Contenedor móvil base (estilo mockup o responsive) */
+/* Contenedor móvil base (estilo mockup o responsive).
+
+   overflow-y es auto y no hidden: con hidden, cualquier lista más alta que la
+   pantalla se recortaba en silencio y sin barra de desplazamiento. La altura
+   pasa de height a min-height por lo mismo. Visualmente en móvil no cambia
+   nada mientras el contenido quepa.
+
+   El ensanchado para escritorio vive en styles/layout.css. */
 .app-container {
   width: 100vw;
-  height: 100vh;
+  min-height: 100vh;
   max-width: 450px;
   margin: 0 auto;
   box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   background-color: #ffffff;
+}
+
+/* La splash y el onboarding sí ocupan exactamente la pantalla. */
+.app-container--fijo {
+  height: 100vh;
+  overflow: hidden;
 }
 
 /* Splash Screen */

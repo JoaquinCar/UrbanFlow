@@ -4,11 +4,15 @@ import InputField from '../Components/InputField';
 import { COLORS } from '../colors';
 import { HiEnvelope, HiLockClosed } from 'react-icons/hi2';
 import './CreateAccount.css';
-import { Link, useNavigate } from 'react-router-dom';
-import api from '../api';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import { homeForRole } from '../config/nav';
+import { mensajeDeError } from '../lib/apiError';
 
 const Login = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { login } = useAuth();
   const [formData, setFormData] = useState({
     email: '',
     contraseña: '',
@@ -31,19 +35,15 @@ const Login = () => {
     setError('');
 
     try {
-      const response = await api.post('/auth/login', {
-        email: formData.email,
-        password: formData.contraseña,
-      });
+      // El access token queda en memoria dentro del AuthContext; el refresh
+      // viaja en la cookie httpOnly que pone el servidor.
+      const usuario = await login(formData.email, formData.contraseña);
 
-      // Guardar token y datos del usuario
-      localStorage.setItem('access_token', response.data.access_token);
-      localStorage.setItem('user', JSON.stringify(response.data.user));
-
-      // Redirigir a dashboard
-      navigate('/dashboard');
+      // Cada rol aterriza en su propia pantalla, o vuelve a donde iba.
+      const destino = location.state?.from || homeForRole(usuario.rol);
+      navigate(destino, { replace: true });
     } catch (err) {
-      setError(err.response?.data?.error || 'Error al iniciar sesión');
+      setError(mensajeDeError(err, 'Error al iniciar sesión'));
     } finally {
       setLoading(false);
     }
@@ -64,7 +64,7 @@ const Login = () => {
       <h1 className="main-title">Inicio de Sesión</h1>
       <p className="subtitle">Ingresa tu correo y contraseña.</p>
 
-      {error && <p style={{ color: 'red', marginBottom: '15px' }}>{error}</p>}
+      {error && <p className="form-error">{error}</p>}
 
       <form className="auth-form" onSubmit={handleSubmit}>
         <InputField
@@ -94,8 +94,7 @@ const Login = () => {
       </form>
 
       <div className="form-footer">
-        <Link to="/LostPassword" className="regular-link">Recuperar contraseña</Link><br />
-        ¿No tienes cuenta? <Link to="/CreateAccount" className="regular-link">Crear cuenta</Link>
+        <Link to="/lost-password" className="regular-link">Recuperar contraseña</Link>
       </div>
     </div>
   );

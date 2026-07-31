@@ -2,6 +2,9 @@ const crypto = require('crypto')
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
 const pool = require('../../shared/db/pool')
+const { httpError } = require('../../shared/utils/errors')
+
+const SALT_ROUNDS = 12
 
 // sha256 hash of refresh token stored in DB — fast, one-way, not the token itself
 function hashToken(token) {
@@ -132,4 +135,24 @@ async function me(userId) {
   return rows[0]
 }
 
-module.exports = { login, refresh, logout, me }
+// Cambio de contraseña con verificación de la actual. Invalida el refresh token
+// para que las sesiones abiertas en otros dispositivos queden fuera.
+async function cambiarPassword(userId, passwordActual, passwordNueva) {
+  const { rows } = await pool.query(
+    'SELECT id, password_hash FROM usuarios WHERE id = $1 AND activo = TRUE',
+    [userId]
+  )
+  const user = rows[0]
+  if (!user) throw httpError(404, 'Usuario no encontrado')
+
+  const valid = await bcrypt.compare(passwordActual, user.password_hash)
+  if (!valid) throw httpError(401, 'La contraseña actual es incorrecta')
+
+  const hash = await bcrypt.hash(passwordNueva, SALT_ROUNDS)
+  await pool.query(
+    'UPDATE usuarios SET password_hash = $1, refresh_token = NULL WHERE id = $2',
+    [hash, userId]
+  )
+}
+
+module.exports = { login, refresh, logout, me, cambiarPassword }

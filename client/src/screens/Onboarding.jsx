@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import MyButton from '../components/MyButton';
+import MyButton from '../Components/MyButton';
 import { useNavigate } from 'react-router-dom';
 
 const Onboarding = () => {
@@ -40,9 +40,10 @@ const Onboarding = () => {
     handleFinish();
   };
 
+  // No hay registro público: las cuentas las crea el admin al dar de alta al
+  // propietario. El onboarding termina en el login.
   const handleFinish = () => {
-    console.log('Navegar a la pantalla de Login / Home');
-    navigate('/CreateAccount'); // Navega a la pantalla de CreateAccount
+    navigate('/login');
   };
 
   return (
@@ -74,6 +75,9 @@ const Onboarding = () => {
           ))}
         </div>
 
+        <button type="button" className="btn-skip" onClick={handleSkip}>
+          Saltar
+        </button>
       </div>
     </div>
   );

@@ -1,48 +1,34 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-
-import {
-  HiBars3,
-  HiXMark,
-  HiHome,
-  HiBanknotes,
-  HiBell,
-  HiUsers,
-  HiQrCode,
-  HiCog6Tooth,
-  HiArrowRightOnRectangle,
-} from 'react-icons/hi2';
+import { HiBars3, HiXMark, HiArrowRightOnRectangle } from 'react-icons/hi2';
+import { useAuth } from '../context/AuthContext';
+import { navItemsForRole } from '../config/nav';
 import '../screens/main.css';
-
-const NAV_ITEMS = [
-  { label: 'Dashboard',       icon: HiHome,                    path: '/dashboard' },
-  { label: 'Pagos',           icon: HiBanknotes,               path: '/payments' },
-  { label: 'Notificaciones',  icon: HiBell,                    path: '/notifications' },
-  { label: 'Mi Acceso (QR)',  icon: HiQrCode,                  path: '/access' },
-  { label: 'Propietarios',    icon: HiUsers,                   path: '/owners' },
-  { label: 'Configuración',   icon: HiCog6Tooth,               path: '/settings' },
-];
+import '../styles/layout.css';
 
 export function SideMenu() {
   const [isOpen, setIsOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+  const { rol, logout } = useAuth();
+
+  // Las entradas dependen del rol: el vigilante no ve Propietarios ni Cuotas.
+  const items = navItemsForRole(rol);
 
   const handleNavigate = (path) => {
     navigate(path);
     setIsOpen(false);
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('user');
+  const handleLogout = async () => {
+    await logout();
     navigate('/login');
   };
 
   return (
     <>
       <button
-        className="dashboard-header-btn"
+        className="dashboard-header-btn dashboard-header-btn--menu"
         onClick={() => setIsOpen(true)}
         aria-label="Abrir menú"
       >
@@ -71,18 +57,22 @@ export function SideMenu() {
         </div>
 
         <div className="sidemenu-nav">
-          {NAV_ITEMS.map(({ label, icon: Icon, path }) => (
-            <button
-              key={path}
-              className={`sidemenu-item ${location.pathname === path ? 'active' : ''}`}
-              onClick={() => handleNavigate(path)}
-            >
-              <span className="sidemenu-item-icon">
-                <Icon size={20} />
-              </span>
-              {label}
-            </button>
-          ))}
+          {items.map(({ label, icon: Icon, path }) => {
+            const activo = location.pathname === path;
+            return (
+              <button
+                key={path}
+                className={`sidemenu-item ${activo ? 'active' : ''}`}
+                aria-current={activo ? 'page' : undefined}
+                onClick={() => handleNavigate(path)}
+              >
+                <span className="sidemenu-item-icon">
+                  <Icon size={20} />
+                </span>
+                {label}
+              </button>
+            );
+          })}
 
           <hr className="sidemenu-divider" />
 

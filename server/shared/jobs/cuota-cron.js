@@ -40,6 +40,11 @@ async function generarCuotasMensuales(fechaRef) {
 }
 
 function iniciarCronCuotas() {
+  // La zona horaria es explícita a propósito: en Railway/Render el contenedor
+  // arranca en UTC, y mes_anio se calcula con new Date() local. Sin fijarla, el
+  // job del día 1 a las 00:01 UTC cae en el mes anterior en horario de México.
+  const timezone = process.env.TZ || 'America/Mazatlan'
+
   cron.schedule('1 0 1 * *', async () => {
     console.log('[cuota-cron] Ejecutando generación mensual...')
     try {
@@ -47,8 +52,9 @@ function iniciarCronCuotas() {
     } catch (err) {
       console.error('[cuota-cron] Error:', err.message)
     }
-  })
-  console.log('[cuota-cron] Programado: día 1 de cada mes a las 00:01')
+  }, { timezone })
+
+  console.log(`[cuota-cron] Programado: día 1 de cada mes a las 00:01 (${timezone})`)
 }
 
 module.exports = { iniciarCronCuotas, generarCuotasMensuales }
