@@ -203,6 +203,50 @@ const SUITES = {
     check('el lote eliminado ya no existe → 404', r16.status === 404, r16.status)
   },
 
+  dashboard: async (ctx) => {
+    const r1 = await req('GET', '/fraccionamiento/dashboard', { token: ctx.admin })
+    check('el panel responde con todas las secciones',
+      r1.status === 200 &&
+      r1.data.lotes && r1.data.cuotas && r1.data.visitas &&
+      r1.data.tickets && r1.data.reservaciones && r1.data.actividad,
+      Object.keys(r1.data ?? {}))
+
+    const d = r1.data
+
+    // Coherencia con las otras fuentes: si el panel y los listados no cuadran,
+    // el panel miente y nadie lo nota.
+    const lotes = await req('GET', '/fraccionamiento/lotes?limit=500', { token: ctx.admin })
+    check('el conteo de lotes cuadra con el listado',
+      d.lotes.total === lotes.data.total, { panel: d.lotes.total, listado: lotes.data.total })
+    check('los lotes por estado suman el total',
+      d.lotes.disponible + d.lotes.proceso + d.lotes.vendido === d.lotes.total, d.lotes)
+
+    const morosos = await req('GET', '/pagos/morosos', { token: ctx.admin })
+    check('el conteo de morosos cuadra con el reporte',
+      d.cuotas.morosos === morosos.data.length, { panel: d.cuotas.morosos, reporte: morosos.data.length })
+
+    const activas = await req('GET', '/visitas/activas', { token: ctx.admin })
+    check('las visitas dentro cuadran con la caseta',
+      d.visitas.dentro === activas.data.length, { panel: d.visitas.dentro, caseta: activas.data.length })
+
+    const tickets = await req('GET', '/mantenimiento?estado=abierto', { token: ctx.admin })
+    check('los tickets abiertos cuadran con mantenimiento',
+      d.tickets.abiertos === tickets.data.total, { panel: d.tickets.abiertos, modulo: tickets.data.total })
+
+    check('el monto adeudado es un número positivo',
+      Number(d.cuotas.monto_adeudado) > 0, d.cuotas?.monto_adeudado)
+    check('hay actividad reciente de visitas y tickets',
+      d.actividad.visitas.length > 0 && Array.isArray(d.actividad.tickets), {
+        visitas: d.actividad?.visitas?.length, tickets: d.actividad?.tickets?.length,
+      })
+
+    // ── permisos ──
+    for (const [rol, token] of [['propietario', ctx.propietario], ['vigilante', ctx.vigilante], ['tecnico', ctx.tecnico]]) {
+      const r = await req('GET', '/fraccionamiento/dashboard', { token })
+      check(`el panel está cerrado al rol ${rol} → 403`, r.status === 403, r.status)
+    }
+  },
+
   owners: async (ctx) => {
     const r1 = await req('GET', '/propietarios', { token: ctx.admin })
     check('lista de propietarios con lotes agregados',

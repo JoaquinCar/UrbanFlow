@@ -4,7 +4,6 @@ import { useAuth } from '../context/AuthContext';
 import Onboarding from '../screens/Onboarding';
 import Login from '../screens/Login';
 import LostPassword from '../screens/LostPassword';
-import Dashboard from '../screens/Dashboard';
 import Access from '../screens/Access';
 import Notifications from '../screens/Notifications';
 import Owners from '../screens/Owners';
@@ -22,6 +21,7 @@ import Comunicados from '../screens/admin/Comunicados';
 import Areas from '../screens/admin/Areas';
 import Reservas from '../screens/portal/Reservas';
 import Portal from '../screens/portal/Portal';
+import AdminDashboard from '../screens/admin/AdminDashboard';
 
 // Las rutas internas van en minúsculas. Las variantes en PascalCase que usaban
 // las pantallas viejas se redirigen para no romper enlaces existentes.
@@ -33,7 +33,7 @@ import Portal from '../screens/portal/Portal';
 // pantalla: uno ve su portal personal y el otro el panel de administración.
 function InicioSegunRol() {
   const { rol } = useAuth();
-  return rol === 'propietario' ? <Portal /> : <Dashboard />;
+  return rol === 'propietario' ? <Portal /> : <AdminDashboard />;
 }
 
 function AppRoutes() {

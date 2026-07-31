@@ -13,6 +13,10 @@ const soloAdmin = requireRole(['admin'])
 router.get('/', controller.obtener)
 router.put('/', soloAdmin, controller.actualizar)
 
+// Panel de administración. Lee de seis tablas distintas, por eso vive aquí:
+// el fraccionamiento es lo único que las abarca a todas.
+router.get('/dashboard', soloAdmin, controller.dashboard)
+
 // Mapa y catálogos
 router.get('/mapa', controller.obtenerMapa)
 router.get('/etapas', controller.listarEtapas)

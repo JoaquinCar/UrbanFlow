@@ -82,6 +82,18 @@ async function obtenerMapa(req, res, next) {
   }
 }
 
+async function dashboard(req, res, next) {
+  try {
+    const [metricas, actividad] = await Promise.all([
+      service.obtenerMetricas(fracc(req)),
+      service.actividadReciente(fracc(req)),
+    ])
+    res.json({ ...metricas, actividad })
+  } catch (err) {
+    next(err)
+  }
+}
+
 async function listarEtapas(req, res, next) {
   try {
     res.json(await service.listarEtapas(fracc(req)))
@@ -101,4 +113,5 @@ module.exports = {
   asignarPropietario,
   obtenerMapa,
   listarEtapas,
+  dashboard,
 }
