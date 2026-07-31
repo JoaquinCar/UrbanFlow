@@ -19,11 +19,26 @@ export function setOnSessionExpired(fn) {
   onSessionExpired = fn
 }
 
-// Cola de peticiones que fallaron con 401 mientras se renueva el token. Sin
-// esto, 5 peticiones simultáneas dispararían 5 refresh en paralelo y, como el
-// backend rota el refresh token en cada uso, las 4 últimas fallarían con
-// "Refresh token revocado" y tirarían la sesión de un usuario válido.
+// Renovación de sesión compartida.
+//
+// El backend ROTA el refresh token en cada uso: al renovar, invalida el token
+// anterior. Por eso dos renovaciones en paralelo se pisan — la primera rota el
+// token que la segunda todavía está usando, y la segunda recibe "Refresh token
+// revocado", tirando la sesión de un usuario perfectamente válido.
+//
+// Pasa en dos situaciones reales:
+//  1. Varias peticiones caducan a la vez y todas reciben 401.
+//  2. Al arrancar la app. En desarrollo, StrictMode monta los efectos dos veces,
+//     así que el AuthProvider pide refresh dos veces seguidas.
+//
+// La solución para ambas es la misma: una única promesa en vuelo que todos
+// comparten. Por eso esto se exporta, para que el arranque no se salte la cola.
 let renovando = null
+
+export function renovarSesion() {
+  renovando = renovando || renovarToken().finally(() => { renovando = null })
+  return renovando
+}
 
 async function renovarToken() {
   // Instancia limpia: si usáramos `api`, este refresh volvería a pasar por el
@@ -53,8 +68,7 @@ api.interceptors.response.use(
 
     try {
       // Todas las peticiones en cola esperan la MISMA promesa de refresh.
-      renovando = renovando || renovarToken().finally(() => { renovando = null })
-      const token = await renovando
+      const token = await renovarSesion()
 
       original.headers = original.headers || {}
       original.headers.Authorization = `Bearer ${token}`

@@ -25,7 +25,7 @@ app.get('/api/health', (req, res) => res.json({ status: 'ok', env: process.env.N
 
 // Routes
 const authRoutes = require('./modules/auth/auth.routes')
-// const fraccionamientoRoutes = require('./modules/fraccionamiento/fraccionamiento.routes')
+const fraccionamientoRoutes = require('./modules/fraccionamiento/fraccionamiento.routes')
 // const ownersRoutes = require('./modules/owners/owners.routes')
 // const visitsRoutes = require('./modules/visits/visits.routes')
 // const paymentsRoutes = require('./modules/payments/payments.routes')
@@ -34,7 +34,7 @@ const authRoutes = require('./modules/auth/auth.routes')
 // const reservationsRoutes = require('./modules/reservations/reservations.routes')
 
 app.use('/api/auth', authRoutes)
-// app.use('/api/fraccionamiento', fraccionamientoRoutes)
+app.use('/api/fraccionamiento', fraccionamientoRoutes)
 // app.use('/api/propietarios', ownersRoutes)
 // app.use('/api/visitas', visitsRoutes)
 // app.use('/api/pagos', paymentsRoutes)

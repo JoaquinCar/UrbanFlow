@@ -98,3 +98,72 @@
 @media (min-width: 768px) {
   .page-actions { padding: 0 2rem 1rem; }
 }
+
+/* Encabezado de página con contador */
+.page-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-right: 1.25rem;
+}
+
+.page-contador {
+  font-size: 0.78rem;
+  color: #9ca3af;
+  white-space: nowrap;
+}
+
+.page-body { padding: 0 1.25rem 2rem; }
+
+/* Botones de icono dentro de las tablas */
+.tabla-acciones {
+  display: inline-flex;
+  gap: 0.35rem;
+}
+
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.4rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #374151;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.icon-btn:hover {
+  background: #f0f4ff;
+  color: #101483;
+  border-color: #c7d2fe;
+}
+
+.icon-btn--peligro:hover {
+  background: #fef2f2;
+  color: #dc2626;
+  border-color: #fecaca;
+}
+
+/* Texto de ayuda debajo de un campo */
+.campo-ayuda {
+  display: block;
+  margin-top: 0.3rem;
+  font-size: 0.72rem;
+  color: #9ca3af;
+  line-height: 1.4;
+}
+
+.campo-ayuda code {
+  background: #f3f4f6;
+  padding: 0.1rem 0.3rem;
+  border-radius: 4px;
+  font-size: 0.9em;
+}
+
+@media (min-width: 768px) {
+  .page-head { padding-right: 2rem; }
+  .page-body { padding: 0 2rem 2rem; }
+}

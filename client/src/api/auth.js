@@ -1,4 +1,4 @@
-import api from './client'
+import api, { renovarSesion } from './client'
 import { setAccessToken, clearAccessToken } from './token'
 
 export async function login(email, password) {
@@ -17,10 +17,13 @@ export async function logout() {
 }
 
 // Recupera el access token desde la cookie httpOnly. Se usa al arrancar la app.
-export async function refresh() {
-  const { data } = await api.post('/auth/refresh')
-  setAccessToken(data.accessToken)
-  return data.accessToken
+//
+// Delega en renovarSesion() en vez de llamar a /auth/refresh por su cuenta: el
+// backend rota el refresh token en cada uso, así que dos llamadas en paralelo
+// se invalidan entre sí. StrictMode monta los efectos dos veces en desarrollo,
+// de modo que este camino SIEMPRE se ejecuta dos veces al arrancar.
+export function refresh() {
+  return renovarSesion()
 }
 
 export async function me() {

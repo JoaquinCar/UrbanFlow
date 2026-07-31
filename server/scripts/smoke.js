@@ -106,6 +106,94 @@ const SUITES = {
     })
     check('change-password con nueva muy corta → 400', r8.status === 400, r8.data)
   },
+
+  fraccionamiento: async (ctx) => {
+    const r1 = await req('GET', '/fraccionamiento', { token: ctx.admin })
+    check('GET /fraccionamiento devuelve el del token', r1.status === 200 && !!r1.data.nombre, r1.data)
+
+    const r2 = await req('GET', '/fraccionamiento/lotes', { token: ctx.admin })
+    check('lista de lotes con total', r2.status === 200 && r2.data.total > 0, r2.data?.total)
+
+    const r3 = await req('GET', '/fraccionamiento/lotes?estado=vendido', { token: ctx.admin })
+    check('filtro por estado solo trae vendidos',
+      r3.status === 200 && r3.data.items.length > 0 && r3.data.items.every(l => l.estado === 'vendido'),
+      r3.data?.items?.map(l => l.estado))
+
+    check('los lotes vendidos traen el nombre del propietario',
+      r3.data.items.every(l => !!l.propietario_nombre), r3.data?.items?.[0])
+
+    const r4 = await req('GET', '/fraccionamiento/mapa', { token: ctx.admin })
+    check('el mapa trae svg_path_id en todos los lotes',
+      r4.status === 200 && r4.data.lotes.length > 0 && r4.data.lotes.every(l => !!l.svg_path_id),
+      r4.data?.lotes?.[0])
+    check('el mapa trae resumen por estado',
+      r4.data.resumen && typeof r4.data.resumen.vendido === 'number', r4.data?.resumen)
+
+    const r5 = await req('GET', '/fraccionamiento/etapas', { token: ctx.admin })
+    check('etapas se derivan de los lotes', r5.status === 200 && r5.data.includes('Etapa 1'), r5.data)
+
+    // ── permisos ──
+    const r6 = await req('POST', '/fraccionamiento/lotes', {
+      token: ctx.propietario, body: { numero: 'HACK-01' },
+    })
+    check('un propietario no puede crear lotes → 403', r6.status === 403, r6.data)
+
+    // ── ciclo de vida completo ──
+    const numero = 'ZZ-99'
+    const r7 = await req('POST', '/fraccionamiento/lotes', {
+      token: ctx.admin,
+      body: { numero, etapa: 'Etapa 1', superficie_m2: 250, precio: 990000, svg_path_id: `lote-${numero}` },
+    })
+    check('admin crea lote → 201 y nace disponible',
+      r7.status === 201 && r7.data.estado === 'disponible', r7.data)
+    const loteId = r7.data?.id
+
+    const r8 = await req('POST', '/fraccionamiento/lotes', { token: ctx.admin, body: { numero } })
+    check('número duplicado → 409', r8.status === 409, r8.data)
+
+    const r9 = await req('POST', '/fraccionamiento/lotes', {
+      token: ctx.admin, body: { numero: 'ZZ-98', estado: 'inventado' },
+    })
+    check('estado inválido → 400', r9.status === 400, r9.data)
+
+    // Asignar propietario debe marcar el lote como vendido.
+    const props = await req('GET', '/fraccionamiento/lotes?estado=vendido&limit=1', { token: ctx.admin })
+    const propId = props.data?.items?.[0]?.propietario_id
+
+    const r10 = await req('PUT', `/fraccionamiento/lotes/${loteId}/propietario`, {
+      token: ctx.admin, body: { propietario_id: propId },
+    })
+    check('asignar propietario marca el lote vendido',
+      r10.status === 200 && r10.data.estado === 'vendido' && r10.data.propietario_id === propId, r10.data)
+
+    const r11 = await req('PUT', `/fraccionamiento/lotes/${loteId}/propietario`, {
+      token: ctx.admin, body: { propietario_id: null },
+    })
+    check('desasignar lo devuelve a disponible',
+      r11.status === 200 && r11.data.estado === 'disponible' && r11.data.propietario_id === null, r11.data)
+
+    const r12 = await req('PUT', `/fraccionamiento/lotes/${loteId}/propietario`, {
+      token: ctx.admin, body: { propietario_id: '00000000-0000-0000-0000-000000000000' },
+    })
+    check('propietario de otro fraccionamiento → 404', r12.status === 404, r12.data)
+
+    const r13 = await req('PUT', `/fraccionamiento/lotes/${loteId}`, {
+      token: ctx.admin, body: { precio: 1234567 },
+    })
+    check('actualización parcial no borra los otros campos',
+      r13.status === 200 && Number(r13.data.precio) === 1234567 && r13.data.numero === numero, r13.data)
+
+    const r14 = await req('GET', `/fraccionamiento/lotes/${loteId}`, { token: ctx.admin })
+    check('detalle de lote trae propietario null cuando no tiene',
+      r14.status === 200 && r14.data.propietario === null, r14.data)
+
+    // Limpieza: la suite deja la base como la encontró.
+    const r15 = await req('DELETE', `/fraccionamiento/lotes/${loteId}`, { token: ctx.admin })
+    check('admin elimina el lote → 204', r15.status === 204, r15.status)
+
+    const r16 = await req('GET', `/fraccionamiento/lotes/${loteId}`, { token: ctx.admin })
+    check('el lote eliminado ya no existe → 404', r16.status === 404, r16.status)
+  },
 }
 
 async function main() {
