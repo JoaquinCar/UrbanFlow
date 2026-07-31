@@ -225,6 +225,126 @@ async function obtenerMapa(fraccionamientoId) {
   return { config_mapa: fracc.config_mapa, lotes: rows, resumen, total: rows.length }
 }
 
+// Métricas del panel de administración.
+//
+// Va en una sola consulta con subconsultas independientes en vez de seis
+// llamadas: son agregados pequeños y así el panel muestra un estado coherente
+// del mismo instante, sin que una cifra sea de hace 200 ms y otra de ahora.
+//
+// Se entrega en este módulo y no en uno propio porque lee de seis tablas
+// distintas y no pertenece a ninguna: el fraccionamiento es lo único que las
+// abarca a todas.
+async function obtenerMetricas(fraccionamientoId) {
+  const { rows } = await pool.query(
+    `SELECT
+       -- Lotes por estado
+       (SELECT COUNT(*)::int FROM lotes WHERE fraccionamiento_id = $1)                          AS lotes_total,
+       (SELECT COUNT(*)::int FROM lotes WHERE fraccionamiento_id = $1 AND estado = 'disponible') AS lotes_disponibles,
+       (SELECT COUNT(*)::int FROM lotes WHERE fraccionamiento_id = $1 AND estado = 'proceso')    AS lotes_proceso,
+       (SELECT COUNT(*)::int FROM lotes WHERE fraccionamiento_id = $1 AND estado = 'vendido')    AS lotes_vendidos,
+
+       (SELECT COUNT(*)::int FROM propietarios WHERE fraccionamiento_id = $1)                    AS propietarios_total,
+
+       -- Cuotas. "Vencido" se calcula, igual que en el módulo de pagos: el
+       -- enum puede ir por detrás si el job del día 1 no ha corrido.
+       (SELECT COUNT(*)::int FROM cuotas
+         WHERE fraccionamiento_id = $1 AND estado IN ('pendiente','vencido'))                    AS cuotas_pendientes,
+       (SELECT COUNT(*)::int FROM cuotas
+         WHERE fraccionamiento_id = $1 AND estado IN ('pendiente','vencido')
+           AND mes_anio < date_trunc('month', CURRENT_DATE))                                     AS cuotas_vencidas,
+       (SELECT COALESCE(SUM(monto), 0) FROM cuotas
+         WHERE fraccionamiento_id = $1 AND estado IN ('pendiente','vencido'))                    AS monto_adeudado,
+       (SELECT COALESCE(SUM(pg.monto_pagado), 0)
+          FROM pagos pg INNER JOIN cuotas c ON c.id = pg.cuota_id
+         WHERE c.fraccionamiento_id = $1
+           AND pg.fecha_pago >= date_trunc('month', CURRENT_DATE))                               AS cobrado_mes,
+       (SELECT COUNT(DISTINCT propietario_id)::int FROM cuotas
+         WHERE fraccionamiento_id = $1 AND estado IN ('pendiente','vencido')
+           AND mes_anio < date_trunc('month', CURRENT_DATE))                                     AS morosos,
+
+       -- Visitas
+       (SELECT COUNT(*)::int FROM visitas
+         WHERE fraccionamiento_id = $1 AND entrada_at >= CURRENT_DATE)                           AS visitas_hoy,
+       (SELECT COUNT(*)::int FROM visitas
+         WHERE fraccionamiento_id = $1 AND salida_at IS NULL)                                    AS visitas_dentro,
+
+       -- Mantenimiento
+       (SELECT COUNT(*)::int FROM solicitudes_mantenimiento
+         WHERE fraccionamiento_id = $1 AND estado = 'abierto')                                   AS tickets_abiertos,
+       (SELECT COUNT(*)::int FROM solicitudes_mantenimiento
+         WHERE fraccionamiento_id = $1 AND estado = 'en_proceso')                                AS tickets_en_proceso,
+
+       -- Reservaciones próximas
+       (SELECT COUNT(*)::int FROM reservaciones r
+          INNER JOIN areas_comunes a ON a.id = r.area_id
+         WHERE a.fraccionamiento_id = $1 AND r.estado <> 'cancelada'
+           AND r.fecha >= CURRENT_DATE)                                                          AS reservaciones_proximas,
+       (SELECT COUNT(*)::int FROM reservaciones r
+          INNER JOIN areas_comunes a ON a.id = r.area_id
+         WHERE a.fraccionamiento_id = $1 AND r.estado = 'pendiente'
+           AND r.fecha >= CURRENT_DATE)                                                          AS reservaciones_por_confirmar
+    `,
+    [fraccionamientoId]
+  )
+
+  const m = rows[0]
+
+  return {
+    lotes: {
+      total: m.lotes_total,
+      disponible: m.lotes_disponibles,
+      proceso: m.lotes_proceso,
+      vendido: m.lotes_vendidos,
+    },
+    propietarios: { total: m.propietarios_total },
+    cuotas: {
+      pendientes: m.cuotas_pendientes,
+      vencidas: m.cuotas_vencidas,
+      monto_adeudado: m.monto_adeudado,
+      cobrado_mes: m.cobrado_mes,
+      morosos: m.morosos,
+    },
+    visitas: { hoy: m.visitas_hoy, dentro: m.visitas_dentro },
+    tickets: { abiertos: m.tickets_abiertos, en_proceso: m.tickets_en_proceso },
+    reservaciones: {
+      proximas: m.reservaciones_proximas,
+      por_confirmar: m.reservaciones_por_confirmar,
+    },
+  }
+}
+
+// Actividad reciente del fraccionamiento, para que el panel no sea solo
+// números sueltos y el administrador vea qué está pasando.
+async function actividadReciente(fraccionamientoId) {
+  const { rows: visitas } = await pool.query(
+    `SELECT v.id, v.nombre_visitante, v.tipo, v.entrada_at, v.salida_at, l.numero AS lote_numero
+     FROM visitas v INNER JOIN lotes l ON l.id = v.lote_destino_id
+     WHERE v.fraccionamiento_id = $1
+     ORDER BY v.entrada_at DESC LIMIT 5`,
+    [fraccionamientoId]
+  )
+
+  const { rows: tickets } = await pool.query(
+    `SELECT t.id, t.descripcion, t.estado, t.created_at, u.nombre AS solicitante_nombre
+     FROM solicitudes_mantenimiento t INNER JOIN usuarios u ON u.id = t.solicitante_id
+     WHERE t.fraccionamiento_id = $1 AND t.estado <> 'resuelto'
+     ORDER BY t.created_at DESC LIMIT 5`,
+    [fraccionamientoId]
+  )
+
+  const { rows: morosos } = await pool.query(
+    `SELECT p.id, p.nombre_completo, SUM(c.monto) AS monto_adeudado, COUNT(*)::int AS cuotas
+     FROM cuotas c INNER JOIN propietarios p ON p.id = c.propietario_id
+     WHERE c.fraccionamiento_id = $1 AND c.estado IN ('pendiente','vencido')
+       AND c.mes_anio < date_trunc('month', CURRENT_DATE)
+     GROUP BY p.id, p.nombre_completo
+     ORDER BY SUM(c.monto) DESC LIMIT 5`,
+    [fraccionamientoId]
+  )
+
+  return { visitas, tickets, morosos }
+}
+
 // Etapas existentes, para poblar el filtro del frontend sin hardcodearlas.
 async function listarEtapas(fraccionamientoId) {
   const { rows } = await pool.query(
@@ -247,4 +367,6 @@ module.exports = {
   asignarPropietario,
   obtenerMapa,
   listarEtapas,
+  obtenerMetricas,
+  actividadReciente,
 }

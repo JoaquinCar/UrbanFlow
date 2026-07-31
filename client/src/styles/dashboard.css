@@ -1,0 +1,122 @@
+/* Panel de administración: métricas y actividad reciente. */
+
+.metricas-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1.75rem;
+}
+
+.metrica {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.15rem;
+  padding: 1rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  background: #ffffff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.07);
+  text-align: left;
+  font: inherit;
+}
+
+button.metrica {
+  cursor: pointer;
+  transition: box-shadow 0.18s, transform 0.18s;
+}
+
+button.metrica:hover {
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1);
+  transform: translateY(-1px);
+}
+
+.metrica-icono {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  margin-bottom: 0.35rem;
+}
+
+.metrica-valor {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #111827;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+
+.metrica-etiqueta {
+  font-size: 0.8rem;
+  color: #374151;
+  font-weight: 500;
+}
+
+.metrica-detalle {
+  font-size: 0.72rem;
+  color: #9ca3af;
+}
+
+.metrica--azul  .metrica-icono { background: #e0e7ff; color: #101483; }
+.metrica--verde .metrica-icono { background: #dcfce7; color: #16a34a; }
+.metrica--ambar .metrica-icono { background: #fef3c7; color: #b45309; }
+.metrica--rojo  .metrica-icono { background: #fef2f2; color: #dc2626; }
+
+/* Barra de proporción: comunica la distribución sin traer una librería de
+   gráficas entera para tres números. */
+.barra-estados {
+  display: flex;
+  width: 100%;
+  height: 22px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: #f3f4f6;
+  margin-bottom: 0.75rem;
+}
+
+.barra-segmento { display: block; height: 100%; }
+
+.barra--vendido    { background: #a5b4fc; }
+.barra--proceso    { background: #fcd34d; }
+.barra--disponible { background: #86efac; }
+
+/* Secciones */
+.panel-seccion { margin-bottom: 1.75rem; }
+
+.panel-seccion .caseta-subtitulo {
+  justify-content: space-between;
+  align-items: center;
+}
+
+.panel-enlace {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  border: none;
+  background: none;
+  color: #101483;
+  font-size: 0.76rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+}
+
+.panel-enlace:hover { text-decoration: underline; }
+
+/* Dentro del panel las listas ya llevan el padding de .page-body */
+.panel-lista { padding-left: 0; padding-right: 0; }
+
+/* La leyenda del mapa se reutiliza aquí; sin el padding de la pantalla mapa. */
+.panel-seccion .mapa-leyenda { padding: 0; }
+
+@media (min-width: 1100px) {
+  .panel-columnas {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+    align-items: start;
+  }
+}
