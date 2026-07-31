@@ -1,0 +1,89 @@
+/* Portal del propietario: listas compactas de resumen. */
+
+.portal-lista {
+  list-style: none;
+  margin: 0 0 0.5rem;
+  padding: 0 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.portal-fila {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.85rem;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+}
+
+.portal-fila > div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.portal-fila-titulo {
+  font-size: 0.87rem;
+  font-weight: 600;
+  color: #111827;
+  /* Las descripciones de los tickets son texto libre y pueden ser largas. */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.portal-fila-sub {
+  font-size: 0.74rem;
+  color: #6b7280;
+}
+
+.portal-aviso {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  width: calc(100% - 2.5rem);
+  margin: 0 1.25rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid #c7d2fe;
+  border-radius: 12px;
+  background: #eef2ff;
+  color: #101483;
+  cursor: pointer;
+  text-align: left;
+}
+
+.portal-aviso:hover { background: #e0e7ff; }
+
+.portal-aviso > div {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+/* Monto vencido dentro de la tarjeta de pagos */
+.payments-vencido {
+  margin: 0.1rem 0 0;
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: #dc2626;
+}
+
+/* .action-card pasa de div a button: hay que neutralizar el estilo nativo. */
+button.action-card {
+  border: 1px solid #e5e7eb;
+  font: inherit;
+  text-align: center;
+  cursor: pointer;
+}
+
+@media (min-width: 768px) {
+  .portal-lista { padding-left: 2rem; padding-right: 2rem; }
+  .portal-aviso { margin-left: 2rem; margin-right: 2rem; width: calc(100% - 4rem); }
+}
