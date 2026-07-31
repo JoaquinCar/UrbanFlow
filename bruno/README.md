@@ -1,6 +1,6 @@
 # Colección de Bruno — API de UrbanFlow
 
-87 peticiones que cubren los ocho módulos de la API, organizadas por carpetas y
+85 peticiones que cubren los ocho módulos de la API, organizadas por carpetas y
 **ejecutables de arriba abajo sin pegar nada a mano**.
 
 ## Cómo abrirla
@@ -84,7 +84,7 @@ variable de entorno: ejecuta antes la petición que la captura (normalmente el
 
 ## Mantenimiento de la colección
 
-Se genera con un script en lugar de editarse a mano, porque son 87 peticiones y
+Se genera con un script en lugar de editarse a mano, porque son 85 peticiones y
 mantenerlas sincronizadas con la API a mano es inviable:
 
 ```bash
