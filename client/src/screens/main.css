@@ -1015,3 +1015,17 @@
 }
 
 .notfound-action { width: 100%; max-width: 280px; }
+
+/* Autor de un comunicado en el tablón de avisos */
+.notification-autor {
+  display: block;
+  margin-top: 0.3rem;
+  font-size: 0.72rem;
+  color: #9ca3af;
+}
+
+/* Faltaba el color del icono para el tipo de aviso que sí se usa */
+.notification-icon--aviso {
+  background: #e0e7ff;
+  color: #101483;
+}

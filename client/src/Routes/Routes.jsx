@@ -17,6 +17,7 @@ import Cuotas from '../screens/admin/Cuotas';
 import EstadoCuenta from '../screens/portal/EstadoCuenta';
 import PaymentResult from '../screens/PaymentResult';
 import Tickets from '../screens/Tickets';
+import Comunicados from '../screens/admin/Comunicados';
 
 // Las rutas internas van en minúsculas. Las variantes en PascalCase que usaban
 // las pantallas viejas se redirigen para no romper enlaces existentes.
@@ -60,6 +61,7 @@ function AppRoutes() {
         <Route path="/lotes"  element={<Lotes />} />
         <Route path="/mapa"   element={<Mapa />} />
         <Route path="/cuotas" element={<Cuotas />} />
+        <Route path="/comunicados" element={<Comunicados />} />
       </Route>
 
       <Route element={<RequireAuth allow={['vigilante', 'admin']} />}>
