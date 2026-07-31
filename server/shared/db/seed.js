@@ -384,6 +384,55 @@ async function seed() {
 
     console.log(`  ✓ tickets      ${TICKETS.length} de mantenimiento en los tres estados`)
 
+    // ── Áreas comunes y reservaciones ────────────────────────────────────────
+    const AREAS = [
+      { nombre: 'Salón de eventos', capacidad: 80 },
+      { nombre: 'Alberca', capacidad: 40 },
+      { nombre: 'Cancha de pádel', capacidad: 8 },
+      { nombre: 'Área de asadores', capacidad: 20 },
+    ]
+
+    const areasCreadas = {}
+    for (const fracId of [fracId1, fracId2]) {
+      for (const a of AREAS) {
+        const { rows } = await client.query(
+          `INSERT INTO areas_comunes (fraccionamiento_id, nombre, capacidad)
+           VALUES ($1, $2, $3)
+           ON CONFLICT (fraccionamiento_id, nombre) DO UPDATE SET capacidad = EXCLUDED.capacidad
+           RETURNING id, nombre`,
+          [fracId, a.nombre, a.capacidad]
+        )
+        if (fracId === fracId1) areasCreadas[a.nombre] = rows[0].id
+      }
+    }
+
+    // Las reservaciones se borran y regeneran: no tienen clave natural y la
+    // restricción EXCLUDE rechazaría un solapamiento al re-insertar.
+    await client.query(
+      `DELETE FROM reservaciones r USING areas_comunes a
+       WHERE a.id = r.area_id AND a.fraccionamiento_id = $1`,
+      [fracId1]
+    )
+
+    // Fechas relativas para que siempre haya reservas futuras en la demo.
+    const RESERVAS = [
+      { area: 'Salón de eventos',  dias: 3,  ini: '16:00', fin: '22:00', estado: 'confirmada', prop: 0 },
+      { area: 'Alberca',           dias: 5,  ini: '10:00', fin: '14:00', estado: 'confirmada', prop: 1 },
+      { area: 'Cancha de pádel',   dias: 1,  ini: '18:00', fin: '20:00', estado: 'pendiente',  prop: 2 },
+      { area: 'Área de asadores',  dias: 7,  ini: '13:00', fin: '18:00', estado: 'pendiente',  prop: 0 },
+      { area: 'Salón de eventos',  dias: -6, ini: '17:00', fin: '23:00', estado: 'cancelada',  prop: 1 },
+    ]
+
+    for (const r of RESERVAS) {
+      await client.query(
+        `INSERT INTO reservaciones (area_id, propietario_id, fecha, hora_inicio, hora_fin, estado)
+         VALUES ($1, $2, (CURRENT_DATE + $3::int), $4::time, $5::time, $6::estado_reservacion)`,
+        [areasCreadas[r.area], propsCreados[r.prop].id, r.dias, r.ini, r.fin, r.estado]
+      )
+    }
+
+    console.log(`  ✓ áreas        ${AREAS.length} por fraccionamiento, ${RESERVAS.length} reservaciones`)
+
     await client.query('COMMIT')
     console.log(`\nPassword para todos: ${DEFAULT_PASSWORD}`)
     console.log('Seed completado.')

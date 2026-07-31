@@ -777,6 +777,143 @@ const SUITES = {
     const r13 = await req('GET', `/comunicados/${comunicadoId}`, { token: ctx.admin })
     check('los comunicados de prueba quedaron eliminados', r13.status === 404, r13.status)
   },
+
+  reservations: async (ctx) => {
+    // La ruta literal /areas debe ganarle a /:id.
+    const r1 = await req('GET', '/reservaciones/areas', { token: ctx.propietario })
+    check('GET /areas no se confunde con /:id',
+      r1.status === 200 && Array.isArray(r1.data) && r1.data.length >= 4, r1.data?.length)
+    const areaId = r1.data?.find(a => a.nombre === 'Cancha de pádel')?.id
+
+    const r2 = await req('POST', '/reservaciones/areas', {
+      token: ctx.propietario, body: { nombre: 'Área pirata' },
+    })
+    check('un propietario no puede crear áreas → 403', r2.status === 403, r2.data)
+
+    const r3 = await req('POST', '/reservaciones/areas', {
+      token: ctx.admin, body: { nombre: 'Salón de eventos' },
+    })
+    check('área con nombre duplicado → 409', r3.status === 409, r3.data)
+
+    const r4 = await req('POST', '/reservaciones/areas', {
+      token: ctx.admin, body: { nombre: 'QA Gimnasio', capacidad: 0 },
+    })
+    check('capacidad cero → 400', r4.status === 400, r4.data)
+
+    const r5 = await req('POST', '/reservaciones/areas', {
+      token: ctx.admin, body: { nombre: 'QA Gimnasio', capacidad: 12 },
+    })
+    check('crear área → 201', r5.status === 201 && r5.data.activa === true, r5.data)
+    const areaQa = r5.data?.id
+
+    // ── reservar ──
+    const fecha = new Date(Date.now() + 20 * 86400000).toISOString().slice(0, 10)
+
+    const r6 = await req('POST', '/reservaciones', {
+      token: ctx.propietario,
+      body: { area_id: areaQa, fecha, hora_inicio: '10:00', hora_fin: '12:00' },
+    })
+    check('el propietario reserva → 201 y nace pendiente',
+      r6.status === 201 && r6.data.estado === 'pendiente', r6.data)
+    const reservaId = r6.data?.id
+
+    const r7 = await req('POST', '/reservaciones', {
+      token: ctx.propietario,
+      body: { area_id: areaQa, fecha, hora_inicio: '11:00', hora_fin: '13:00' },
+    })
+    check('un horario solapado → 409 diciendo con qué choca',
+      r7.status === 409 && /choca con una reserva/.test(r7.data.error ?? ''), r7.data)
+
+    // Frontera: 12:00-14:00 empieza justo cuando termina la anterior. tsrange
+    // es [inicio, fin) así que NO debe considerarse solapamiento.
+    const r8 = await req('POST', '/reservaciones', {
+      token: ctx.propietario,
+      body: { area_id: areaQa, fecha, hora_inicio: '12:00', hora_fin: '14:00' },
+    })
+    check('una franja contigua (12:00 tras 10:00-12:00) sí se permite', r8.status === 201, r8.data)
+    const reservaContigua = r8.data?.id
+
+    const r9 = await req('POST', '/reservaciones', {
+      token: ctx.propietario,
+      body: { area_id: areaQa, fecha, hora_inicio: '15:00', hora_fin: '15:00' },
+    })
+    check('hora de fin igual a la de inicio → 400', r9.status === 400, r9.data)
+
+    // ── disponibilidad ──
+    const r10 = await req('GET', `/reservaciones/areas/${areaQa}/disponibilidad?fecha=${fecha}`, {
+      token: ctx.propietario,
+    })
+    check('la disponibilidad lista las franjas ocupadas',
+      r10.status === 200 && r10.data.ocupado.length === 2, r10.data?.ocupado?.length)
+
+    const r11 = await req('GET', `/reservaciones/areas/${areaQa}/disponibilidad`, { token: ctx.propietario })
+    check('disponibilidad sin fecha → 400', r11.status === 400, r11.data)
+
+    // ── permisos ──
+    const r12 = await req('GET', '/reservaciones/mias', { token: ctx.propietario })
+    check('el propietario ve sus reservaciones',
+      r12.status === 200 && r12.data.some(r => r.id === reservaId), r12.data?.length)
+
+    const r13 = await req('GET', '/reservaciones', { token: ctx.propietario })
+    check('un propietario no lista todas las reservaciones → 403', r13.status === 403, r13.data)
+
+    // ── confirmar y cancelar ──
+    const r14 = await req('PUT', `/reservaciones/${reservaId}`, {
+      token: ctx.admin, body: { estado: 'confirmada' },
+    })
+    check('el admin confirma la reservación', r14.status === 200 && r14.data.estado === 'confirmada', r14.data)
+
+    const r15 = await req('PUT', `/reservaciones/${reservaId}/cancelar`, { token: ctx.propietario })
+    check('el dueño cancela su reservación', r15.status === 200 && r15.data.estado === 'cancelada', r15.data)
+
+    const r16 = await req('PUT', `/reservaciones/${reservaId}/cancelar`, { token: ctx.propietario })
+    check('cancelar dos veces → 409', r16.status === 409, r16.data)
+
+    // Cancelar libera el hueco: 10:00-12:00 vuelve a estar disponible.
+    const r17 = await req('POST', '/reservaciones', {
+      token: ctx.propietario,
+      body: { area_id: areaQa, fecha, hora_inicio: '10:00', hora_fin: '12:00' },
+    })
+    check('cancelar libera el horario para otra reserva', r17.status === 201, r17.data)
+    const reservaRepetida = r17.data?.id
+
+    // ── concurrencia: lo que la sonda NO puede evitar ──
+    // Dos peticiones idénticas en paralelo. Ambas pasan la sonda SELECT porque
+    // ninguna ve todavía a la otra; solo la restricción EXCLUDE de la base
+    // impide la doble reserva. Debe entrar exactamente una.
+    const fechaCarrera = new Date(Date.now() + 40 * 86400000).toISOString().slice(0, 10)
+    const cuerpoCarrera = { area_id: areaQa, fecha: fechaCarrera, hora_inicio: '09:00', hora_fin: '11:00' }
+
+    const [c1, c2] = await Promise.all([
+      req('POST', '/reservaciones', { token: ctx.propietario, body: cuerpoCarrera }),
+      req('POST', '/reservaciones', { token: ctx.propietario, body: cuerpoCarrera }),
+    ])
+    const creadas = [c1, c2].filter(r => r.status === 201)
+    const rechazadas = [c1, c2].filter(r => r.status === 409)
+    check('dos reservas simultáneas del mismo hueco: solo entra una',
+      creadas.length === 1 && rechazadas.length === 1, [c1.status, c2.status])
+
+    const reservaCarrera = creadas[0]?.data?.id
+
+    // ── área desactivada ──
+    await req('PUT', `/reservaciones/areas/${areaQa}`, { token: ctx.admin, body: { activa: false } })
+    const r18 = await req('POST', '/reservaciones', {
+      token: ctx.propietario,
+      body: { area_id: areaQa, fecha, hora_inicio: '18:00', hora_fin: '19:00' },
+    })
+    check('no se puede reservar un área desactivada → 409', r18.status === 409, r18.data)
+
+    const r19 = await req('DELETE', `/reservaciones/areas/${areaQa}`, { token: ctx.admin })
+    check('no se borra un área con reservaciones → 409 sugiriendo desactivar',
+      r19.status === 409 && /[Dd]esactí?vala/.test(r19.data.error ?? ''), r19.data)
+
+    // ── limpieza ──
+    for (const id of [reservaId, reservaContigua, reservaRepetida, reservaCarrera].filter(Boolean)) {
+      await req('DELETE', `/reservaciones/${id}`, { token: ctx.admin })
+    }
+    const r20 = await req('DELETE', `/reservaciones/areas/${areaQa}`, { token: ctx.admin })
+    check('sin reservaciones, el área ya se puede eliminar → 204', r20.status === 204, r20.status)
+  },
 }
 
 async function main() {
