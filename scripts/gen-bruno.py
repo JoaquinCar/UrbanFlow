@@ -75,6 +75,12 @@ def peticion(nombre, seq, metodo, url, token=None, cuerpo=None,
 
 # ── estructura ─────────────────────────────────────────────────────────────
 
+# El README no lo genera este script, así que se conserva al regenerar.
+README_PREVIO = None
+if os.path.isfile(f'{RAIZ}/README.md'):
+    with open(f'{RAIZ}/README.md', encoding='utf-8') as f:
+        README_PREVIO = f.read()
+
 if os.path.isdir(RAIZ):
     shutil.rmtree(RAIZ)
 
@@ -746,6 +752,17 @@ escribir(f'{D}/11 Eliminar area.bru', peticion(
 respuesta sugiere desactivarla en su lugar."""))
 
 # ── resumen ────────────────────────────────────────────────────────────────
-total = sum(len([f for f in fs if f.endswith('.bru') and f != 'folder.bru'])
-            for _, _, fs in os.walk(RAIZ))
+total = sum(
+    len([f for f in fs if f.endswith('.bru') and f != 'folder.bru'])
+    for raiz, _, fs in os.walk(RAIZ)
+    if 'environments' not in raiz  # los entornos no son peticiones
+)
+# Se restaura el README con el recuento actualizado, para que no pueda quedar
+# desfasado respecto a las peticiones que realmente existen.
+if README_PREVIO:
+    import re as _re
+    escribir(f'{RAIZ}/README.md',
+             _re.sub(r'\b\d+ peticiones\b', f'{total} peticiones',
+                     _re.sub(r'\blos \d+ endpoints\b', f'los {total} endpoints', README_PREVIO)))
+
 print(f'{total} peticiones generadas en {RAIZ}/')
