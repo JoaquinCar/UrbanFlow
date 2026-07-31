@@ -34,8 +34,8 @@ export const NAV_ITEMS = [
   { label: 'Mi acceso (QR)',      icon: HiQrCode,                path: '/access',        roles: ['propietario'] },
   { label: 'Mantenimiento',       icon: HiWrenchScrewdriver,     path: '/mantenimiento', roles: ['admin', 'tecnico', 'propietario'] },
   { label: 'Áreas comunes',       icon: HiCalendarDays,          path: '/reservas',      roles: ['admin', 'propietario'],             pendiente: true },
-  { label: 'Comunicados',         icon: HiMegaphone,             path: '/comunicados',   roles: ['admin'],                            pendiente: true },
-  { label: 'Notificaciones',      icon: HiBell,                  path: '/notifications', roles: ['admin', 'propietario', 'vigilante', 'tecnico'] },
+  { label: 'Comunicados',         icon: HiMegaphone,             path: '/comunicados',   roles: ['admin'] },
+  { label: 'Avisos',              icon: HiBell,                  path: '/notifications', roles: ['admin', 'propietario', 'vigilante', 'tecnico'] },
   { label: 'Configuración',       icon: HiCog6Tooth,             path: '/settings',      roles: ['admin', 'propietario', 'vigilante', 'tecnico'] },
 ]
 

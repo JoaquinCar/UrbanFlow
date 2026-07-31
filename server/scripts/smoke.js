@@ -670,6 +670,113 @@ const SUITES = {
     const r16 = await req('DELETE', `/mantenimiento/${ticketId}`, { token: ctx.admin })
     check('el admin elimina el ticket → 204', r16.status === 204, r16.status)
   },
+
+  comms: async (ctx) => {
+    const r1 = await req('GET', '/comunicados/canales', { token: ctx.admin })
+    check('el estado de los canales se reporta a la interfaz',
+      r1.status === 200 && typeof r1.data.email === 'boolean' && typeof r1.data.whatsapp === 'boolean',
+      r1.data)
+
+    const r2 = await req('GET', '/comunicados/destinatarios', { token: ctx.admin })
+    check('la vista previa cuenta destinatarios por canal',
+      r2.status === 200 && r2.data.total >= 3 && r2.data.con_whatsapp >= 3, r2.data)
+
+    // Sin canales activos se ejercita la persistencia sin tocar proveedores.
+    const r3 = await req('POST', '/comunicados', {
+      token: ctx.admin,
+      body: {
+        titulo: 'QA: corte de agua programado',
+        cuerpo: 'El martes de 9 a 14 h habrá corte por mantenimiento de la red.',
+        canales: { email: false, whatsapp: false },
+      },
+    })
+    check('crear comunicado sin canales → 201 y queda registrado',
+      r3.status === 201 && !!r3.data.comunicado.id, r3.data?.comunicado?.titulo)
+    const comunicadoId = r3.data?.comunicado?.id
+
+    check('los canales se guardan tal cual se pidieron',
+      r3.data.comunicado.canales.email === false && r3.data.comunicado.canales.whatsapp === false,
+      r3.data?.comunicado?.canales)
+
+    const r4 = await req('POST', '/comunicados', { token: ctx.admin, body: { titulo: '  ', cuerpo: 'x' } })
+    check('título vacío → 400', r4.status === 400, r4.data)
+
+    const r5 = await req('POST', '/comunicados', { token: ctx.admin, body: { titulo: 'x' } })
+    check('sin cuerpo → 400', r5.status === 400, r5.data)
+
+    const r6 = await req('POST', '/comunicados', {
+      token: ctx.propietario, body: { titulo: 'Intruso', cuerpo: 'x' },
+    })
+    check('un propietario no puede enviar comunicados → 403', r6.status === 403, r6.data)
+
+    // ── canal email sin credenciales ──
+    const r7 = await req('POST', '/comunicados', {
+      token: ctx.admin,
+      body: { titulo: 'QA email', cuerpo: 'prueba', canales: { email: true, whatsapp: false } },
+    })
+    if (process.env.SMTP_HOST) {
+      check('con SMTP configurado el correo se envía',
+        r7.status === 201 && r7.data.resultado.email.enviados > 0, r7.data?.resultado?.email)
+    } else {
+      check('sin SMTP el comunicado se guarda y el error queda en el resultado',
+        r7.status === 201 &&
+        r7.data.resultado.email.enviados === 0 &&
+        /SMTP no configurado/.test(r7.data.resultado.email.errores[0]?.error ?? ''),
+        r7.data?.resultado?.email)
+    }
+    const comunicadoEmail = r7.data?.comunicado?.id
+
+    // ── canal whatsapp sin credenciales ──
+    const r8 = await req('POST', '/comunicados', {
+      token: ctx.admin,
+      body: { titulo: 'QA whatsapp', cuerpo: 'prueba', canales: { email: false, whatsapp: true } },
+    })
+    if (process.env.META_ACCESS_TOKEN) {
+      check('con Meta configurada el WhatsApp se envía',
+        r8.status === 201 && r8.data.resultado.whatsapp.enviados > 0, r8.data?.resultado?.whatsapp)
+    } else {
+      check('sin Meta el comunicado se guarda y el error queda en el resultado',
+        r8.status === 201 &&
+        /Meta Cloud API no configurada/.test(r8.data.resultado.whatsapp.errores[0]?.error ?? ''),
+        r8.data?.resultado?.whatsapp)
+    }
+    const comunicadoWa = r8.data?.comunicado?.id
+
+    // ── historial y tablón ──
+    const r9 = await req('GET', '/comunicados', { token: ctx.admin })
+    check('el historial trae los comunicados con su resultado',
+      r9.status === 200 && r9.data.items.some(c => c.id === comunicadoId), r9.data?.total)
+    check('el historial incluye el nombre del autor',
+      r9.data.items.every(c => !!c.autor_nombre), r9.data?.items?.[0]?.autor_nombre)
+
+    const r10 = await req('GET', '/comunicados/mios', { token: ctx.propietario })
+    check('el residente ve el tablón de avisos',
+      r10.status === 200 && r10.data.some(c => c.id === comunicadoId), r10.data?.length)
+    check('el tablón no expone los detalles de entrega',
+      r10.data.every(c => c.resultado_envio === undefined), Object.keys(r10.data?.[0] ?? {}))
+
+    // ── webhook de Meta ──
+    const verify = process.env.META_VERIFY_TOKEN
+    if (verify) {
+      const r11 = await req('GET',
+        `/comunicados/webhook?hub.mode=subscribe&hub.verify_token=${verify}&hub.challenge=42`)
+      check('el webhook de Meta devuelve el challenge en texto plano',
+        r11.status === 200 && String(r11.data).trim() === '42', r11.data)
+    } else {
+      check('META_VERIFY_TOKEN sin configurar: se omite la prueba del challenge', true)
+    }
+
+    const r12 = await req('GET',
+      '/comunicados/webhook?hub.mode=subscribe&hub.verify_token=token-equivocado&hub.challenge=42')
+    check('el webhook rechaza un verify_token incorrecto → 403', r12.status === 403, r12.status)
+
+    // ── limpieza ──
+    for (const id of [comunicadoId, comunicadoEmail, comunicadoWa].filter(Boolean)) {
+      await req('DELETE', `/comunicados/${id}`, { token: ctx.admin })
+    }
+    const r13 = await req('GET', `/comunicados/${comunicadoId}`, { token: ctx.admin })
+    check('los comunicados de prueba quedaron eliminados', r13.status === 404, r13.status)
+  },
 }
 
 async function main() {

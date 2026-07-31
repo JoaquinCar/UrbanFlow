@@ -1,0 +1,127 @@
+/* Comunicados: composición y historial. */
+
+/* Aviso de configuración faltante. Se muestra ANTES de escribir, no después de
+   intentar enviar y fallar. */
+.aviso-config {
+  display: flex;
+  gap: 0.75rem;
+  margin: 0 1.25rem 1rem;
+  padding: 0.9rem 1rem;
+  border-radius: 12px;
+  background: #fef3c7;
+  color: #92400e;
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.aviso-config p { margin: 0 0 0.35rem; }
+.aviso-config p:last-child { margin-bottom: 0; }
+
+.aviso-config code {
+  background: rgba(0, 0, 0, 0.07);
+  padding: 0.05rem 0.3rem;
+  border-radius: 4px;
+  font-size: 0.9em;
+}
+
+/* Historial */
+.comunicado-lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.comunicado-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.07);
+}
+
+.comunicado-cabecera {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.comunicado-titulo {
+  flex: 1;
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+.comunicado-cuerpo {
+  margin: 0;
+  font-size: 0.88rem;
+  color: #374151;
+  line-height: 1.55;
+  white-space: pre-wrap;
+}
+
+.comunicado-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 1rem;
+  font-size: 0.74rem;
+  color: #9ca3af;
+}
+
+.comunicado-resultado {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.15rem;
+}
+
+/* Selección de canales */
+.canales-grupo {
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 0.85rem 1rem;
+  margin: 0;
+}
+
+.canales-grupo legend {
+  font-size: 0.74rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #6b7280;
+  padding: 0 0.35rem;
+}
+
+.canal-opcion {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.5rem 0;
+  font-size: 0.88rem;
+  color: #374151;
+  cursor: pointer;
+}
+
+.canal-opcion input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: #101483;
+  cursor: pointer;
+}
+
+.canal-conteo {
+  margin-left: auto;
+  font-size: 0.74rem;
+  color: #9ca3af;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (min-width: 768px) {
+  .aviso-config { margin-left: 2rem; margin-right: 2rem; }
+}
