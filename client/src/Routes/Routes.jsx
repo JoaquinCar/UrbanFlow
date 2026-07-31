@@ -18,6 +18,8 @@ import EstadoCuenta from '../screens/portal/EstadoCuenta';
 import PaymentResult from '../screens/PaymentResult';
 import Tickets from '../screens/Tickets';
 import Comunicados from '../screens/admin/Comunicados';
+import Areas from '../screens/admin/Areas';
+import Reservas from '../screens/portal/Reservas';
 
 // Las rutas internas van en minúsculas. Las variantes en PascalCase que usaban
 // las pantallas viejas se redirigen para no romper enlaces existentes.
@@ -62,6 +64,7 @@ function AppRoutes() {
         <Route path="/mapa"   element={<Mapa />} />
         <Route path="/cuotas" element={<Cuotas />} />
         <Route path="/comunicados" element={<Comunicados />} />
+        <Route path="/areas" element={<Areas />} />
       </Route>
 
       <Route element={<RequireAuth allow={['vigilante', 'admin']} />}>
@@ -72,6 +75,7 @@ function AppRoutes() {
       <Route element={<RequireAuth allow={['propietario']} />}>
         <Route path="/payments" element={<EstadoCuenta />} />
         <Route path="/access"   element={<Access />} />
+        <Route path="/reservas" element={<Reservas />} />
       </Route>
 
       {/* Retorno de MercadoPago: /pagos/exito, /pagos/error, /pagos/pendiente */}
