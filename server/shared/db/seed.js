@@ -214,6 +214,58 @@ async function seed() {
     console.log(`  ✓ lotes        ${lotesF1.length} en Las Palmas, ${lotesF2.length} en Jardines del Sol`)
     console.log(`  ✓ vendidos     ${vendidos} lotes con propietario asignado`)
 
+    // ── Visitas ──────────────────────────────────────────────────────────────
+    // Sin clave natural: se borran las del fraccionamiento y se regeneran, para
+    // que el seed siga siendo idempotente.
+    await client.query('DELETE FROM visitas WHERE fraccionamiento_id = $1', [fracId1])
+
+    const { rows: lotesVendidos } = await client.query(
+      `SELECT id, numero FROM lotes
+       WHERE fraccionamiento_id = $1 AND estado = 'vendido' ORDER BY numero`,
+      [fracId1]
+    )
+    const vigilanteId = porEmail['vigilante@urbanflow.test'].id
+
+    const VISITANTES = [
+      ['Rosa Elena Márquez', 'visita', 'SLP-4471'],
+      ['Paquetería Estafeta', 'delivery', 'MXN-8820'],
+      ['Ana Sofía Iribe', 'visita', null],
+      ['Técnico Aire Frío', 'servicio', 'CUL-1193'],
+      ['Reparto Amazon', 'delivery', 'AMZ-3364'],
+      ['Jorge Luis Peraza', 'visita', 'SIN-7712'],
+      ['Jardinería Verde', 'servicio', null],
+      ['Fernanda Ochoa', 'visita', 'CUL-5508'],
+      ['DiDi Food', 'delivery', null],
+    ]
+
+    // Las fechas son relativas a NOW(), así que la bitácora de 30 días siempre
+    // tiene contenido sin importar cuándo se corra el seed o la demostración.
+    let visitas = 0
+    let dentro = 0
+    for (let i = 0; i < 45; i++) {
+      const [nombre, tipo, placa] = VISITANTES[i % VISITANTES.length]
+      const lote = lotesVendidos[i % lotesVendidos.length]
+      const horasAtras = i * 15 + (i % 7)          // reparte ~28 días hacia atrás
+      const sigueDentro = i < 3                     // las 3 más recientes, adentro
+      const duracion = 1 + (i % 5)
+
+      await client.query(
+        `INSERT INTO visitas
+           (fraccionamiento_id, lote_destino_id, nombre_visitante, placa_vehiculo,
+            tipo, entrada_at, salida_at, registrado_por)
+         VALUES ($1, $2, $3, $4, $5,
+                 NOW() - ($6 || ' hours')::interval,
+                 CASE WHEN $7 THEN NULL
+                      ELSE NOW() - ($6 || ' hours')::interval + ($8 || ' hours')::interval END,
+                 $9)`,
+        [fracId1, lote.id, nombre, placa, tipo, horasAtras, sigueDentro, duracion, vigilanteId]
+      )
+      visitas++
+      if (sigueDentro) dentro++
+    }
+
+    console.log(`  ✓ visitas      ${visitas} en los últimos 30 días (${dentro} aún dentro)`)
+
     await client.query('COMMIT')
     console.log(`\nPassword para todos: ${DEFAULT_PASSWORD}`)
     console.log('Seed completado.')

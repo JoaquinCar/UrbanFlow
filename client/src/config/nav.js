@@ -24,8 +24,8 @@ import {
 //              bandera al entregar la pantalla, para no publicar enlaces rotos.
 export const NAV_ITEMS = [
   { label: 'Inicio',              icon: HiHome,                  path: '/dashboard',     roles: ['admin', 'propietario'] },
-  { label: 'Caseta',              icon: HiQrCode,                path: '/caseta',        roles: ['vigilante', 'admin'],               pendiente: true },
-  { label: 'Bitácora',            icon: HiClipboardDocumentList, path: '/bitacora',      roles: ['vigilante', 'admin'],               pendiente: true },
+  { label: 'Caseta',              icon: HiQrCode,                path: '/caseta',        roles: ['vigilante', 'admin'] },
+  { label: 'Bitácora',            icon: HiClipboardDocumentList, path: '/bitacora',      roles: ['vigilante', 'admin'] },
   { label: 'Lotes',               icon: HiSquares2X2,            path: '/lotes',         roles: ['admin'] },
   { label: 'Mapa',                icon: HiMap,                   path: '/mapa',          roles: ['admin'] },
   { label: 'Propietarios',        icon: HiUsers,                 path: '/owners',        roles: ['admin'] },
@@ -45,10 +45,10 @@ export function navItemsForRole(rol) {
 }
 
 // A dónde va cada rol tras iniciar sesión. El vigilante no tiene dashboard: su
-// pantalla de trabajo es la caseta (hasta que exista, va a notificaciones).
+// pantalla de trabajo es la caseta.
 export const HOME_BY_ROLE = {
   admin: '/dashboard',
-  vigilante: '/notifications',
+  vigilante: '/caseta',
   propietario: '/dashboard',
   tecnico: '/notifications',
 }

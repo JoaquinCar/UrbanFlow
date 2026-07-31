@@ -6,6 +6,7 @@ import SplashScreen from './screens/SplashScreen';
 import AppRoutes from './Routes/Routes';
 import { AuthProvider } from './context/AuthContext';
 import { ToastProvider } from './context/ToastContext';
+import { SocketProvider } from './context/SocketContext';
 
 function App() {
   const [showSplash, setShowSplash] = useState(true);
@@ -24,9 +25,13 @@ function App() {
     <BrowserRouter>
       <AuthProvider>
         <ToastProvider>
-          <div className={`app-container ${showSplash ? 'app-container--fijo' : ''}`}>
-            {showSplash ? <SplashScreen /> : <AppRoutes />}
-          </div>
+          {/* SocketProvider va dentro de AuthProvider: necesita el token para
+              conectarse y el rol para decidir si se une a la sala de caseta. */}
+          <SocketProvider>
+            <div className={`app-container ${showSplash ? 'app-container--fijo' : ''}`}>
+              {showSplash ? <SplashScreen /> : <AppRoutes />}
+            </div>
+          </SocketProvider>
         </ToastProvider>
       </AuthProvider>
     </BrowserRouter>
