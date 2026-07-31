@@ -14,6 +14,21 @@ const DEFAULT_PASSWORD = process.env.SEED_PASSWORD || 'UrbanFlow2026!'
 // RETURNING no devuelve filas cuando el registro ya existe, se pierde el id y
 // el script se rompe en la segunda corrida — que era justo el bug anterior.
 
+// Catálogo de propietarios de la demostración. El primero conserva el correo
+// propietario@urbanflow.test que documenta el README.
+const PROPIETARIOS = [
+  { email: 'propietario@urbanflow.test',   nombre_completo: 'Juan Pérez Domínguez',        telefono: '6671234567', whatsapp: '+526671234567', curp: 'PEDJ850312HSLRMN04', num_escritura: 'ESC-2024-0147' },
+  { email: 'propietario2@urbanflow.test',  nombre_completo: 'María Fernanda Ríos Guzmán',  telefono: '6679876543', whatsapp: '+526679876543', curp: 'RIGM900718MSLSZR07', num_escritura: 'ESC-2024-0212' },
+  { email: 'propietario3@urbanflow.test',  nombre_completo: 'Luis Ángel Beltrán Soto',     telefono: '6675554433', whatsapp: '+526675554433', curp: 'BESL881125HSLLTS02', num_escritura: 'ESC-2025-0033' },
+  { email: 'propietario4@urbanflow.test',  nombre_completo: 'Carmen Alicia Zazueta Lara',  telefono: '6671112233', whatsapp: '+526671112233', curp: 'ZALC920405MSLZRR09', num_escritura: 'ESC-2024-0288' },
+  { email: 'propietario5@urbanflow.test',  nombre_completo: 'Ricardo Iván Salazar Mora',   telefono: '6674445566', whatsapp: '+526674445566', curp: 'SAMR870920HSLLRC01', num_escritura: 'ESC-2025-0104' },
+  { email: 'propietario6@urbanflow.test',  nombre_completo: 'Gabriela Ochoa Verdugo',      telefono: '6678889900', whatsapp: '+526678889900', curp: 'OOVG950214MSLCRB05', num_escritura: 'ESC-2025-0119' },
+  { email: 'propietario7@urbanflow.test',  nombre_completo: 'Héctor Manuel Angulo Cota',   telefono: '6673332211', whatsapp: '+526673332211', curp: 'AUCH830601HSLNTC08', num_escritura: 'ESC-2024-0355' },
+  { email: 'propietario8@urbanflow.test',  nombre_completo: 'Diana Laura Payán Félix',     telefono: '6676667788', whatsapp: '+526676667788', curp: 'PAFD910830MSLYLN03', num_escritura: 'ESC-2025-0176' },
+  { email: 'propietario9@urbanflow.test',  nombre_completo: 'Sergio Alonso Inzunza Ruiz',  telefono: '6672223344', whatsapp: '+526672223344', curp: 'IURS860117HSLNZR06', num_escritura: 'ESC-2024-0401' },
+  { email: 'propietario10@urbanflow.test', nombre_completo: 'Alejandra Tirado Camacho',    telefono: '6675556677', whatsapp: '+526675556677', curp: 'TICA930523MSLRML02', num_escritura: 'ESC-2025-0210' },
+]
+
 function generarLotes(prefijo, desde, hasta, etapa) {
   const lotes = []
   for (let i = desde; i <= hasta; i++) {
@@ -136,12 +151,15 @@ async function seed() {
     const usuarios = [
       { nombre: 'Admin UrbanFlow',  email: 'admin@urbanflow.test',       rol: 'admin',       fracId: fracId1 },
       { nombre: 'Vigilante Caseta', email: 'vigilante@urbanflow.test',   rol: 'vigilante',   fracId: fracId1 },
-      { nombre: 'Juan Propietario', email: 'propietario@urbanflow.test', rol: 'propietario', fracId: fracId1 },
+      { nombre: 'Juan Pérez Domínguez', email: 'propietario@urbanflow.test', rol: 'propietario', fracId: fracId1 },
       { nombre: 'Carlos Técnico',   email: 'tecnico@urbanflow.test',     rol: 'tecnico',     fracId: fracId1 },
       { nombre: 'Admin Jardines',   email: 'admin2@urbanflow.test',      rol: 'admin',       fracId: fracId2 },
-      // Propietarios adicionales para que las listas y el mapa tengan cuerpo.
-      { nombre: 'María Fernanda Ríos', email: 'propietario2@urbanflow.test', rol: 'propietario', fracId: fracId1 },
-      { nombre: 'Luis Ángel Beltrán',  email: 'propietario3@urbanflow.test', rol: 'propietario', fracId: fracId1 },
+      { nombre: 'Vigilante Nocturno', email: 'vigilante2@urbanflow.test',  rol: 'vigilante',   fracId: fracId1 },
+      { nombre: 'Sofía Técnica',      email: 'tecnico2@urbanflow.test',    rol: 'tecnico',     fracId: fracId1 },
+      // Propietarios adicionales: el plan pide ~10 para la entrega final.
+      ...PROPIETARIOS.slice(1).map(p => ({
+        nombre: p.nombre_completo, email: p.email, rol: 'propietario', fracId: fracId1,
+      })),
     ]
 
     const porEmail = {}
@@ -152,23 +170,15 @@ async function seed() {
     }
 
     // ── Propietarios ─────────────────────────────────────────────────────────
-    const propietarios = [
-      {
-        fracId: fracId1, usuarioId: porEmail['propietario@urbanflow.test'].id,
-        nombre_completo: 'Juan Pérez Domínguez', telefono: '6671234567',
-        whatsapp: '+526671234567', curp: 'PEDJ850312HSLRMN04', num_escritura: 'ESC-2024-0147',
-      },
-      {
-        fracId: fracId1, usuarioId: porEmail['propietario2@urbanflow.test'].id,
-        nombre_completo: 'María Fernanda Ríos Guzmán', telefono: '6679876543',
-        whatsapp: '+526679876543', curp: 'RIGM900718MSLSZR07', num_escritura: 'ESC-2024-0212',
-      },
-      {
-        fracId: fracId1, usuarioId: porEmail['propietario3@urbanflow.test'].id,
-        nombre_completo: 'Luis Ángel Beltrán Soto', telefono: '6675554433',
-        whatsapp: '+526675554433', curp: 'BESL881125HSLLTS02', num_escritura: 'ESC-2025-0033',
-      },
-    ]
+    const propietarios = PROPIETARIOS.map(p => ({
+      fracId: fracId1,
+      usuarioId: porEmail[p.email].id,
+      nombre_completo: p.nombre_completo,
+      telefono: p.telefono,
+      whatsapp: p.whatsapp,
+      curp: p.curp,
+      num_escritura: p.num_escritura,
+    }))
 
     const propsCreados = []
     for (const p of propietarios) {
@@ -289,11 +299,11 @@ async function seed() {
 
       // Seis meses hacia atrás, contando el actual.
       for (let m = 5; m >= 0; m--) {
-        // Los tres primeros propietarios generan un moroso cada uno en el mes
-        // anterior, para que el reporte de morosidad tenga contenido.
-        const esMesAnterior = m === 1
+        // Tres propietarios quedan morosos en los meses anteriores, para que el
+        // reporte de morosidad tenga contenido realista.
         const esMesActual = m === 0
-        const dejarPendiente = esMesActual || (esMesAnterior && p === 0)
+        const esMoroso = p < 3 && m <= p + 1 && m > 0
+        const dejarPendiente = esMesActual || esMoroso
 
         const { rows: cuotaRows } = await client.query(
           `INSERT INTO cuotas (fraccionamiento_id, propietario_id, tipo, monto, mes_anio, estado)
@@ -308,7 +318,7 @@ async function seed() {
         cuotasCreadas++
 
         if (dejarPendiente) {
-          if (esMesAnterior) morosos++
+          if (esMoroso) morosos++
           continue
         }
 

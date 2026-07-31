@@ -639,7 +639,11 @@ const SUITES = {
     check('los técnicos vienen con su carga de trabajo',
       r2.status === 200 && r2.data.length > 0 && typeof r2.data[0].tickets_activos === 'number',
       r2.data?.[0])
-    const tecnicoId = r2.data?.[0]?.id
+    // Se usa el técnico cuyo token tienen las pruebas, no el primero de la
+    // lista: /tecnicos ordena por menor carga y puede devolver a otro.
+    const tecnicoId = ctx.tecnicoId
+    check('el técnico de las pruebas aparece en el listado',
+      r2.data.some(t => t.id === tecnicoId), r2.data?.map(t => t.nombre))
 
     const r3 = await req('GET', '/mantenimiento', { token: ctx.propietario })
     check('un propietario no puede listar todos los tickets → 403', r3.status === 403, r3.data)
@@ -982,6 +986,8 @@ async function main() {
   // no se puede asignar un ticket a alguien que no es técnico).
   const me = await req('GET', '/auth/me', { token: ctx.admin })
   ctx.adminId = me.data.id
+  const meTecnico = await req('GET', '/auth/me', { token: ctx.tecnico })
+  ctx.tecnicoId = meTecnico.data.id
 
   for (const n of nombres) {
     console.log(`\n── ${n} ──`)
