@@ -29,7 +29,7 @@ const fraccionamientoRoutes = require('./modules/fraccionamiento/fraccionamiento
 const ownersRoutes = require('./modules/owners/owners.routes')
 const visitsRoutes = require('./modules/visits/visits.routes')
 const paymentsRoutes = require('./modules/payments/payments.routes')
-// const maintenanceRoutes = require('./modules/maintenance/maintenance.routes')
+const maintenanceRoutes = require('./modules/maintenance/maintenance.routes')
 // const commsRoutes = require('./modules/comms/comms.routes')
 // const reservationsRoutes = require('./modules/reservations/reservations.routes')
 
@@ -38,7 +38,7 @@ app.use('/api/fraccionamiento', fraccionamientoRoutes)
 app.use('/api/propietarios', ownersRoutes)
 app.use('/api/visitas', visitsRoutes)
 app.use('/api/pagos', paymentsRoutes)
-// app.use('/api/mantenimiento', maintenanceRoutes)
+app.use('/api/mantenimiento', maintenanceRoutes)
 // app.use('/api/comunicados', commsRoutes)
 // app.use('/api/reservaciones', reservationsRoutes)
 
