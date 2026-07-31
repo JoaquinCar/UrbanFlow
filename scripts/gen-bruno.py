@@ -91,14 +91,33 @@ escribir(f'{RAIZ}/bruno.json', json.dumps({
     "ignore": ["node_modules", ".git"],
 }, indent=2))
 
+# Los tokens se declaran como secretos: Bruno los guarda en su almacén interno
+# en lugar de escribirlos en este archivo, que sí va al repositorio. Sin esto,
+# cada ejecución dejaba los JWT capturados dentro del .bru y acababan en git.
 escribir(f'{RAIZ}/environments/Local.bru', """vars {
   baseUrl: http://localhost:3000/api
 }
+
+vars:secret [
+  tokenAdmin,
+  tokenVigilante,
+  tokenPropietario,
+  tokenTecnico,
+  qrToken
+]
 """)
 
 escribir(f'{RAIZ}/environments/Produccion.bru', """vars {
   baseUrl: https://CAMBIAR-POR-EL-DOMINIO/api
 }
+
+vars:secret [
+  tokenAdmin,
+  tokenVigilante,
+  tokenPropietario,
+  tokenTecnico,
+  qrToken
+]
 """)
 
 # ── 1. Auth ────────────────────────────────────────────────────────────────
