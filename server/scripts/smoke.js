@@ -43,10 +43,18 @@ async function req(metodo, ruta, { body, token, form, headers: extra } = {}) {
 
   const tipo = res.headers.get('content-type') || ''
   let data
-  if (tipo.includes('json')) data = await res.json()
-  else if (tipo.includes('pdf') || tipo.includes('image') || tipo.includes('octet-stream')) {
+  if (tipo.includes('json')) {
+    data = await res.json()
+  } else if (
+    tipo.includes('pdf') || tipo.includes('image') ||
+    tipo.includes('octet-stream') || tipo.includes('csv')
+  ) {
+    // El CSV se lee como bytes a propósito: res.text() decodifica UTF-8 y en el
+    // proceso SE COME el BOM, así que no serviría para comprobar que va puesto.
     data = Buffer.from(await res.arrayBuffer())
-  } else data = await res.text()
+  } else {
+    data = await res.text()
+  }
 
   return { status: res.status, data, headers: res.headers }
 }
@@ -299,6 +307,114 @@ const SUITES = {
 
     const r22 = await req('POST', '/auth/login', { body: { email, password: PASSWORD } })
     check('borrar el propietario borra también su usuario', r22.status === 401, r22.status)
+  },
+
+  visits: async (ctx) => {
+    // Un lote vendido cualquiera para dirigir las visitas de prueba.
+    const lotes = await req('GET', '/fraccionamiento/lotes?estado=vendido&limit=1', { token: ctx.admin })
+    const loteId = lotes.data?.items?.[0]?.id
+
+    const r1 = await req('POST', '/visitas/entrada', {
+      token: ctx.vigilante,
+      body: { lote_destino_id: loteId, nombre_visitante: 'QA Visitante', tipo: 'visita', placa_vehiculo: 'QA-0001' },
+    })
+    check('el vigilante registra una entrada → 201',
+      r1.status === 201 && r1.data.salida_at === null, r1.data)
+    check('la entrada trae el número de lote resuelto', !!r1.data?.lote_numero, r1.data?.lote_numero)
+    const visitaId = r1.data?.id
+
+    const r2 = await req('POST', '/visitas/entrada', {
+      token: ctx.propietario,
+      body: { lote_destino_id: loteId, nombre_visitante: 'Intruso' },
+    })
+    check('un propietario no puede registrar entradas → 403', r2.status === 403, r2.data)
+
+    const r3 = await req('POST', '/visitas/entrada', {
+      token: ctx.vigilante,
+      body: { lote_destino_id: '00000000-0000-0000-0000-000000000000', nombre_visitante: 'X' },
+    })
+    check('lote de otro fraccionamiento → 404', r3.status === 404, r3.data)
+
+    const r4 = await req('POST', '/visitas/entrada', {
+      token: ctx.vigilante, body: { lote_destino_id: loteId, nombre_visitante: '  ' },
+    })
+    check('nombre vacío → 400', r4.status === 400, r4.data)
+
+    const r5 = await req('GET', '/visitas/activas', { token: ctx.vigilante })
+    check('la visita aparece entre las activas',
+      r5.status === 200 && r5.data.some(v => v.id === visitaId), r5.data?.length)
+
+    const r6 = await req('PUT', `/visitas/${visitaId}/salida`, { token: ctx.vigilante })
+    check('registrar salida → 200 con salida_at', r6.status === 200 && !!r6.data.salida_at, r6.data?.salida_at)
+
+    const r7 = await req('PUT', `/visitas/${visitaId}/salida`, { token: ctx.vigilante })
+    check('segunda salida sobre la misma visita → 409', r7.status === 409, r7.data)
+
+    const r8 = await req('GET', '/visitas/activas', { token: ctx.vigilante })
+    check('tras la salida ya no está entre las activas',
+      !r8.data.some(v => v.id === visitaId), r8.data?.length)
+
+    // ── QR de residente ──
+    const ficha = await req('GET', '/propietarios/me', { token: ctx.propietario })
+    const qr = await req('GET', `/propietarios/${ficha.data.id}/qr`, { token: ctx.propietario })
+    const qrToken = qr.data?.qr_token
+
+    const r9 = await req('POST', '/visitas/qr', { token: ctx.vigilante, body: { token: qrToken } })
+    check('entrada por QR → 201 y tipo residente',
+      r9.status === 201 && r9.data.visita?.tipo === 'residente', r9.data?.visita?.tipo)
+    check('la respuesta identifica al residente y su lote',
+      !!r9.data?.residente?.nombre && !!r9.data?.residente?.lote?.numero, r9.data?.residente)
+    const visitaQr = r9.data?.visita?.id
+
+    const r10 = await req('POST', '/visitas/qr', { token: ctx.vigilante, body: { token: 'basura' } })
+    check('QR inválido → 401', r10.status === 401, r10.data)
+
+    // Rotar el QR debe invalidar el anterior al instante.
+    await req('POST', `/propietarios/${ficha.data.id}/qr/rotar`, { token: ctx.admin })
+    const r11 = await req('POST', '/visitas/qr', { token: ctx.vigilante, body: { token: qrToken } })
+    check('un QR rotado queda revocado → 401', r11.status === 401, r11.data)
+
+    const qr2 = await req('GET', `/propietarios/${ficha.data.id}/qr`, { token: ctx.propietario })
+    const r12 = await req('POST', '/visitas/qr', { token: ctx.vigilante, body: { token: qr2.data.qr_token } })
+    check('el QR nuevo sí funciona', r12.status === 201, r12.status)
+    const visitaQr2 = r12.data?.visita?.id
+
+    // ── bitácora ──
+    const r13 = await req('GET', '/visitas/bitacora', { token: ctx.admin })
+    check('la bitácora trae los 30 días sembrados',
+      r13.status === 200 && r13.data.total >= 40, r13.data?.total)
+
+    const r14 = await req('GET', '/visitas/bitacora?tipo=delivery', { token: ctx.admin })
+    check('filtro por tipo funciona',
+      r14.status === 200 && r14.data.items.every(v => v.tipo === 'delivery'), r14.data?.total)
+
+    const r15 = await req('GET', '/visitas/bitacora?q=Estafeta', { token: ctx.admin })
+    check('búsqueda por texto funciona', r15.status === 200 && r15.data.total > 0, r15.data?.total)
+
+    const r16 = await req('GET', '/visitas/bitacora.csv', { token: ctx.admin })
+    check('el CSV se sirve como text/csv',
+      /text\/csv/.test(r16.headers.get('content-type') ?? ''), r16.headers.get('content-type'))
+    check('el CSV lleva BOM UTF-8 para Excel',
+      r16.data.subarray(0, 3).equals(Buffer.from([0xef, 0xbb, 0xbf])),
+      r16.data?.subarray(0, 6))
+    const csvTexto = r16.data.toString('utf8')
+    check('el CSV trae encabezados y filas',
+      csvTexto.includes('Visitante') && csvTexto.split('\r\n').length > 10,
+      csvTexto.split('\r\n').length)
+    check('el CSV conserva los acentos', /Registró/.test(csvTexto), csvTexto.slice(0, 80))
+
+    const r17 = await req('GET', '/visitas/mis-visitas', { token: ctx.propietario })
+    check('el propietario ve solo las visitas de sus lotes',
+      r17.status === 200 && Array.isArray(r17.data) && r17.data.length > 0, r17.data?.length)
+
+    const r18 = await req('GET', '/visitas/bitacora', { token: ctx.propietario })
+    check('un propietario no puede ver la bitácora completa → 403', r18.status === 403, r18.data)
+
+    // ── limpieza ──
+    for (const id of [visitaQr, visitaQr2].filter(Boolean)) {
+      await req('PUT', `/visitas/${id}/salida`, { token: ctx.vigilante })
+    }
+    check('limpieza: las entradas por QR quedan cerradas', true)
   },
 }
 

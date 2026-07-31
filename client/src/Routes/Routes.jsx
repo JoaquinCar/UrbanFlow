@@ -12,6 +12,8 @@ import Settings from '../screens/Settings';
 import NotFound from '../screens/NotFound';
 import Lotes from '../screens/admin/Lotes';
 import Mapa from '../screens/admin/Mapa';
+import Caseta from '../screens/caseta/Caseta';
+import Bitacora from '../screens/caseta/Bitacora';
 
 // Las rutas internas van en minúsculas. Las variantes en PascalCase que usaban
 // las pantallas viejas se redirigen para no romper enlaces existentes.
@@ -49,6 +51,11 @@ function AppRoutes() {
         <Route path="/owners" element={<Owners />} />
         <Route path="/lotes"  element={<Lotes />} />
         <Route path="/mapa"   element={<Mapa />} />
+      </Route>
+
+      <Route element={<RequireAuth allow={['vigilante', 'admin']} />}>
+        <Route path="/caseta"   element={<Caseta />} />
+        <Route path="/bitacora" element={<Bitacora />} />
       </Route>
 
       <Route element={<RequireAuth allow={['propietario']} />}>

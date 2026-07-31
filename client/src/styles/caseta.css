@@ -1,0 +1,215 @@
+/* Caseta de vigilancia y escáner de QR.
+
+   Pensado para móvil: el vigilante trabaja con el teléfono en la mano. Los
+   objetivos táctiles son grandes y la lista se lee de un vistazo. */
+
+/* ── Estado de la conexión en vivo ─────────────────────────────────── */
+.caseta-estado {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.72rem;
+  color: #9ca3af;
+  white-space: nowrap;
+}
+
+.caseta-estado--vivo { color: #16a34a; }
+
+/* ── Acciones principales ──────────────────────────────────────────── */
+.caseta-accion {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  flex: 1;
+  min-width: 150px;
+  padding: 0.85rem 1rem;
+  font-size: 0.9rem;
+}
+
+.caseta-subtitulo {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 0.75rem;
+}
+
+/* ── Lista de quién está dentro ────────────────────────────────────── */
+.caseta-lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.caseta-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.07);
+}
+
+.caseta-item-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.caseta-item-nombre {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+.caseta-item-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  font-size: 0.8rem;
+  color: #6b7280;
+}
+
+.caseta-item-tiempo {
+  font-size: 0.72rem;
+  color: #9ca3af;
+}
+
+.caseta-salida {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.6rem 0.85rem;
+  border: none;
+  border-radius: 999px;
+  background: #111827;
+  color: #ffffff;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.18s;
+}
+
+.caseta-salida:hover { background: #374151; }
+
+/* ── Escáner ───────────────────────────────────────────────────────── */
+.scanner-wrap {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.scanner-video {
+  width: 100%;
+  max-width: 380px;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: 16px;
+  background: #111827;
+}
+
+/* Marco guía sobre el vídeo, para que el vigilante sepa dónde encuadrar. */
+.scanner-marco {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(62%, 230px);
+  aspect-ratio: 1;
+  border: 3px solid rgba(255, 255, 255, 0.9);
+  border-radius: 16px;
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.28);
+  pointer-events: none;
+}
+
+.scanner-estado,
+.scanner-error {
+  font-size: 0.85rem;
+  color: #6b7280;
+  text-align: center;
+}
+
+.scanner-error {
+  padding: 1.25rem;
+  border-radius: 12px;
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+.scanner-reintentar {
+  padding: 0.6rem 1.1rem;
+  border: 1px solid #d1d5db;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #374151;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.scanner-reintentar:hover { background: #f9fafb; }
+
+/* ── Resultado del escaneo ─────────────────────────────────────────── */
+.qr-resultado {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 1.5rem 1rem;
+  border-radius: 16px;
+  text-align: center;
+}
+
+.qr-resultado--ok    { background: #dcfce7; }
+.qr-resultado--error { background: #fef2f2; }
+
+.qr-resultado-titulo {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 800;
+}
+
+.qr-resultado--ok .qr-resultado-titulo    { color: #16a34a; }
+.qr-resultado--error .qr-resultado-titulo { color: #dc2626; }
+
+.qr-resultado-nombre {
+  margin: 0;
+  font-size: 0.95rem;
+  color: #111827;
+}
+
+.qr-resultado-lote {
+  margin: 0 0 0.75rem;
+  font-size: 0.85rem;
+  color: #6b7280;
+}
+
+/* ── Filtros de fecha de la bitácora ───────────────────────────────── */
+.page-fecha {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.78rem;
+  color: #6b7280;
+  white-space: nowrap;
+}
+
+.bitacora-nota { padding: 0 1.25rem 0.5rem; }
+
+@media (min-width: 768px) {
+  .caseta-accion { flex: 0 0 auto; }
+  .bitacora-nota { padding: 0 2rem 0.5rem; }
+}
