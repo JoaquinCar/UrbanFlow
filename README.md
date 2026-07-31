@@ -1,164 +1,311 @@
 # UrbanFlow — Sistema de Gestión de Fraccionamiento
 
-Sistema web para gestión integral de fraccionamientos residenciales cerrados.
+Sistema web para la gestión integral de fraccionamientos residenciales cerrados.
 
 **Equipo:** Miroslava Moheno · Joaquín Carmona · Jorge Ruiz
-**Stack:** React + Node.js/Express + PostgreSQL
+**Stack:** React 18 + Vite · Node.js/Express · PostgreSQL
 **Periodo:** Mayo – Julio 2026
 
 ---
 
 ## Módulos
 
-| Módulo | Responsable |
-|--------|------------|
-| Auth + Roles | Miroslava Moheno |
-| Lotes + Mapa SVG Interactivo | Miroslava Moheno |
-| Reserva de Áreas Comunes | Miroslava Moheno |
-| Propietarios + Documentos | Joaquín Carmona |
-| Visitas + Caseta + QR | Joaquín Carmona |
-| Comunicados Email + WhatsApp | Joaquín Carmona |
-| Cuotas + Pagos + PDF Recibos | Jorge Ruiz |
-| Mantenimiento + Tickets | Jorge Ruiz |
-| Portal del Propietario | Jorge Ruiz |
+| # | Módulo | Responsable | Estado |
+|---|--------|-------------|--------|
+| 1 | Auth + Roles | Miroslava Moheno | ✅ |
+| 2 | Lotes + Mapa SVG interactivo | Miroslava Moheno | ✅ |
+| 3 | Propietarios + Documentos | Joaquín Carmona | ✅ |
+| 4 | Visitas + Caseta + QR + Socket.io | Joaquín Carmona | ✅ |
+| 5 | Cuotas + Pagos + PDF + MercadoPago | Jorge Ruiz | ✅ |
+| 6 | Mantenimiento + Tickets | Jorge Ruiz | ✅ |
+| 7 | Comunicados Email + WhatsApp | Joaquín Carmona | ✅ |
+| 8 | Reserva de áreas comunes | Miroslava Moheno | ✅ |
+| 9 | Portal del Propietario | Jorge Ruiz | ✅ |
+| 10 | Dashboard Admin + métricas | Todos | ✅ |
 
 ---
 
-## Estructura del Proyecto
+## Estructura del proyecto
 
 ```
 UrbanFlow/
-├── client/          # React 18 + Vite + TailwindCSS
+├── client/                    React 18 + Vite
+│   ├── scripts/               generador del plano SVG
 │   └── src/
-│       ├── api/         # axios instances por módulo
-│       ├── components/  # componentes reutilizables
-│       ├── hooks/       # custom hooks
-│       └── pages/       # vistas por rol: admin, caseta, propietario, tecnico
-├── server/          # Node.js + Express
-│   ├── modules/     # auth, fraccionamiento, owners, visits, payments, maintenance, comms, reservations
-│   └── shared/      # middleware (auth, roles, errors) + db (pool, migrations)
-└── docs/            # diseño, schema DB, plan de proyecto
+│       ├── api/               una capa por módulo (auth, lotes, pagos…)
+│       ├── Components/        componentes reutilizables
+│       ├── config/            nav.js — navegación por rol
+│       ├── context/           AuthContext, ToastContext, SocketContext
+│       ├── hooks/             useFetch
+│       ├── lib/               utilidades (apiError)
+│       ├── Routes/            tabla de rutas y guards
+│       ├── screens/           pantallas: admin/, caseta/, portal/ y comunes
+│       └── styles/            hojas por área
+├── server/                    Node.js + Express
+│   ├── modules/               auth, fraccionamiento, owners, visits,
+│   │                          payments, maintenance, comms, reservations
+│   ├── scripts/               smoke.js — pruebas HTTP de extremo a extremo
+│   └── shared/
+│       ├── db/                pool, migraciones, seed
+│       ├── jobs/              cron de cuotas mensuales
+│       ├── middleware/        auth, roles, errores, uploads
+│       ├── services/          email (Nodemailer), whatsapp (Meta)
+│       └── utils/             errores, qr, csv, realtime
+└── docs/                      esquema, decisiones, pruebas y un .md por módulo
 ```
 
 ---
 
-## Setup Local
+## Puesta en marcha
 
 ### Requisitos
-- Node.js 20+
+- Node.js 20 o superior
 - Docker + Docker Compose
 
 ### Instalación
 
 ```bash
-# 1. Clonar repo
 git clone https://github.com/JoaquinCar/UrbanFlow.git
 cd UrbanFlow
 
-# 2. Instalar dependencias (desde root — workspaces instala client + server)
+# 1. Dependencias (workspaces: instala client y server)
 npm install
 
-# 3. Configurar variables de entorno
+# 2. Variables de entorno
 cp server/.env.example server/.env
 cp client/.env.example client/.env
-# Las credenciales de DB ya coinciden con docker-compose.yml
 ```
 
-> **Windows/PowerShell:** usa `Copy-Item server\.env.example server\.env` en lugar de `cp`
+> **Windows/PowerShell:** usa `Copy-Item server\.env.example server\.env`
+
+> **Node 22+ bloquea los install scripts.** Si falla `bcrypt` o Vite al
+> arrancar, ejecuta `npm approve-scripts bcrypt esbuild` y repite
+> `npm install`. Ambos compilan binarios nativos y los necesitan.
 
 ```bash
-# 4. Abrir Docker Desktop y esperar que esté listo, luego:
+# 3. Base de datos
 docker compose up -d
-# Verifica que esté healthy:
-docker ps
+docker ps                     # espera a que urbanflow-db esté "healthy"
 
-# 5. Crear tablas
-psql -U postgres -c "CREATE DATABASE urbanflow;"
-cd server && npm run migrate
-
-# 6. Cargar datos de prueba
-npm run seed
-
-# 7. Volver al root e iniciar en desarrollo
-cd ..
+# 4. Tablas y datos de prueba
+npm run migrate --workspace=server
+npm run seed --workspace=server
 ```
+
+Los dos comandos son **idempotentes**: se pueden repetir sin romper nada ni
+duplicar datos.
 
 ```bash
-# Terminal 1:
-npm run dev:server   # servidor en http://localhost:3000
-# Terminal 2:
-npm run dev:client   # frontend en http://localhost:5173
+# 5. Arrancar (dos terminales)
+npm run dev:server            # API en http://localhost:3000
+npm run dev:client            # App en http://localhost:5173
 ```
 
-> **Nota — postgres local en conflicto:** Si tienes PostgreSQL instalado localmente, puede estar usando el puerto 5432 y bloquear la conexión al contenedor Docker. Detén el servicio local antes de levantar el proyecto:
-> - Windows: `Stop-Service -Name "postgresql-x64-17"` (como Administrador)
-> - O desde Servicios de Windows: busca `postgresql-x64-17` → Detener
+### Problemas frecuentes
 
-> **Nota — volumen viejo:** Si el contenedor existía con datos de otra instalación:
-> ```bash
-> docker compose down -v   # elimina volúmenes — borra todos los datos
-> docker compose up -d
-> cd server
-> npm run migrate
-> npm run seed
-> ```
+**PostgreSQL local ocupando el puerto 5432.** Detén el servicio antes de
+levantar Docker:
+- Windows: `Stop-Service -Name "postgresql-x64-17"` como Administrador
+- macOS: `brew services stop postgresql`
 
-### Usuarios de prueba (password: `UrbanFlow2026!`)
-
-| Email | Rol |
-|-------|-----|
-| admin@urbanflow.test | Admin |
-| vigilante@urbanflow.test | Vigilante |
-| propietario@urbanflow.test | Propietario |
-| tecnico@urbanflow.test | Técnico |
-
-### pgAdmin (GUI para la DB)
-- URL: http://localhost:5050
-- Email: `admin@urbanflow.test`
-- Password: `admin`
-- Servidor: host `postgres`, port `5432`, DB `urbanflow`, user `postgres`, password `urbanflow2026`
-
-### Variables de entorno requeridas
-
-Ver `server/.env.example` y `client/.env.example`
+**Base de datos de una instalación anterior:**
+```bash
+docker compose down -v        # elimina los volúmenes: borra todos los datos
+docker compose up -d
+npm run migrate --workspace=server && npm run seed --workspace=server
+```
 
 ---
 
-## API — Endpoints implementados
+## Usuarios de prueba
 
-### Auth (`/api/auth`)
+Contraseña para todos: **`UrbanFlow2026!`**
 
-| Método | Endpoint | Auth requerida | Descripción |
-|--------|----------|---------------|-------------|
-| POST | `/api/auth/login` | No | Login. Body: `{ email, password }`. Retorna `{ accessToken, user }` + cookie `refreshToken` (httpOnly) |
-| POST | `/api/auth/refresh` | No | Renueva el access token usando la cookie `refreshToken`. Retorna `{ accessToken }` |
-| POST | `/api/auth/logout` | No | Cierra sesión. Invalida refresh token en DB y limpia cookie |
-| GET | `/api/auth/me` | Bearer token | Retorna datos del usuario autenticado |
+| Email | Rol | Aterriza en |
+|-------|-----|-------------|
+| `admin@urbanflow.test` | Admin | Panel de administración |
+| `vigilante@urbanflow.test` | Vigilante | Caseta |
+| `propietario@urbanflow.test` | Propietario | Portal del propietario |
+| `tecnico@urbanflow.test` | Técnico | Sus asignaciones |
 
-**Uso desde el frontend:**
-- Guarda el `accessToken` en memoria (no en localStorage)
-- El `refreshToken` viaja solo en cookie httpOnly — el browser lo envía automáticamente
-- En cada request protegida: header `Authorization: Bearer <accessToken>`
-- Si el servidor retorna `401`, llama a `/api/auth/refresh` para obtener nuevo token
-- El objeto `user` del login contiene: `id`, `nombre`, `email`, `rol`, `fraccionamiento_id`
+También existen `propietario2..10@urbanflow.test`, `vigilante2@`, `tecnico2@` y
+`admin2@urbanflow.test` (este último en el **segundo** fraccionamiento, útil
+para comprobar el aislamiento de datos entre fraccionamientos).
 
-**Roles disponibles:** `admin` | `vigilante` | `propietario` | `tecnico`
+### Qué trae el seed
+
+2 fraccionamientos · 40 lotes · 10 propietarios · 6 meses de cuotas con
+3 morosos · 45 visitas de los últimos 30 días · 6 tickets · 8 áreas comunes ·
+5 reservaciones.
+
+---
+
+## Pruebas
+
+```bash
+npm run dev:server                                # en una terminal
+npm run smoke --workspace=server                  # en otra
+npm run smoke --workspace=server -- --only=visits # una sola suite
+```
+
+**167 comprobaciones** contra el servidor real y la base en Docker. Suites:
+`auth`, `fraccionamiento`, `dashboard`, `owners`, `visits`, `payments`,
+`maintenance`, `comms`, `reservations`.
+
+### Verificación en navegador
+
+Además hay scripts que manejan un navegador real y comprueban lo que la API no
+puede ver: que la pantalla muestre de verdad lo que devuelve el servidor.
+
+```bash
+npm install --no-save puppeteer-core
+node client/scripts/e2e/verificar-caseta.mjs
+```
+
+Ver [client/scripts/e2e/README.md](client/scripts/e2e/README.md) para la lista
+completa y cómo apuntar al navegador instalado.
+
+Para el recorrido manual por rol, ver [docs/pruebas-e2e.md](docs/pruebas-e2e.md).
+
+---
+
+## API
+
+Todas las rutas cuelgan de `/api`. Salvo las indicadas, requieren
+`Authorization: Bearer <accessToken>`.
+
+### Autenticación — `/api/auth`
+
+| Método | Ruta | Auth | Descripción |
+|--------|------|------|-------------|
+| POST | `/login` | No | `{ email, password }` → `{ accessToken, user }` + cookie `refreshToken` |
+| POST | `/refresh` | Cookie | Renueva el access token |
+| POST | `/logout` | No | Invalida el refresh token |
+| GET | `/me` | Sí | Usuario autenticado |
+| POST | `/change-password` | Sí | `{ passwordActual, passwordNueva }` |
+
+**Cómo consumirla desde el cliente:** el `accessToken` se guarda **en memoria**,
+nunca en `localStorage`. El `refreshToken` viaja en una cookie `httpOnly` que el
+navegador manda solo. Ante un `401` se llama a `/auth/refresh` y se reintenta.
+Ya está implementado en `client/src/api/client.js`, incluida la cola que evita
+que varias peticiones caducando a la vez disparen refresh en paralelo.
+
+### Lotes y mapa — `/api/fraccionamiento`
+
+| Método | Ruta | Rol |
+|--------|------|-----|
+| GET / PUT | `/` | todos / admin |
+| GET | `/dashboard` | admin |
+| GET | `/mapa`, `/etapas` | todos |
+| GET | `/lotes`, `/lotes/:id` | todos |
+| POST / PUT / DELETE | `/lotes`, `/lotes/:id` | admin |
+| PUT | `/lotes/:id/propietario` | admin |
+
+### Propietarios — `/api/propietarios`
+
+| Método | Ruta | Rol |
+|--------|------|-----|
+| GET | `/` | admin, vigilante |
+| GET | `/me` | propietario |
+| GET | `/:id` | admin, vigilante, propietario (suyo) |
+| POST / PUT / DELETE | `/`, `/:id` | admin |
+| GET | `/:id/qr` (`?format=png`) | admin, propietario (suyo) |
+| POST | `/:id/qr/rotar` | admin |
+| GET / POST | `/:id/documentos` | según rol |
+| GET / DELETE | `/documentos/:docId` | según rol |
+
+### Visitas — `/api/visitas`
+
+| Método | Ruta | Rol |
+|--------|------|-----|
+| POST | `/entrada`, `/qr` | vigilante, admin |
+| PUT | `/:id/salida` | vigilante, admin |
+| GET | `/activas` | vigilante, admin |
+| GET | `/bitacora`, `/bitacora.csv` | admin, vigilante |
+| GET | `/mis-visitas` | propietario |
+
+### Cuotas y pagos — `/api/pagos`
+
+| Método | Ruta | Rol |
+|--------|------|-----|
+| POST | `/webhook` | **ninguno** (firma HMAC de MercadoPago) |
+| GET | `/cuotas`, `/cuotas/:propietarioId`, `/morosos`, `/` | admin |
+| GET | `/cuotas/mias` | propietario |
+| POST | `/cuotas`, `/cuotas/generar`, `/manual` | admin |
+| POST | `/checkout` | propietario, admin |
+| GET | `/:id/pdf` | admin, propietario (suyo) |
+
+### Mantenimiento — `/api/mantenimiento`
+
+| Método | Ruta | Rol |
+|--------|------|-----|
+| GET | `/`, `/tecnicos` | admin |
+| GET | `/mios` | propietario, técnico |
+| POST | `/` | propietario, admin, vigilante |
+| PUT | `/:id/asignar` | admin |
+| PUT | `/:id/estado` | admin, técnico (asignado) |
+
+### Comunicados — `/api/comunicados`
+
+| Método | Ruta | Rol |
+|--------|------|-----|
+| GET | `/webhook` | **ninguno** (verificación de Meta) |
+| GET | `/`, `/:id`, `/canales`, `/destinatarios` | admin |
+| POST | `/` | admin |
+| GET | `/mios` | todos |
+
+### Reservaciones — `/api/reservaciones`
+
+| Método | Ruta | Rol |
+|--------|------|-----|
+| GET | `/areas`, `/areas/:id/disponibilidad` | todos |
+| POST / PUT / DELETE | `/areas`, `/areas/:id` | admin |
+| GET | `/mias` | propietario |
+| GET | `/` | admin |
+| POST | `/` | propietario, admin |
+| PUT | `/:id/cancelar` | admin, propietario (dueño) |
+
+**Roles:** `admin` · `vigilante` · `propietario` · `tecnico`
+**Formato de error:** siempre `{ "error": "mensaje en español" }`
+
+---
+
+## Integraciones externas
+
+Los tres servicios están implementados contra sus APIs reales. Sin credenciales
+responden con un error explícito en lugar de simular éxito.
+
+| Servicio | Variables | Sin configurar |
+|---|---|---|
+| MercadoPago | `MP_ACCESS_TOKEN`, `MP_WEBHOOK_SECRET` | El checkout responde `500` diciendo qué falta |
+| Correo | `SMTP_HOST`, `SMTP_USER`, `SMTP_PASS` | El comunicado se guarda; el resultado marca el canal como fallido |
+| WhatsApp | `META_PHONE_NUMBER_ID`, `META_ACCESS_TOKEN` | Igual que el correo |
+
+**Los webhooks necesitan una URL pública.** En local: `ngrok http 3000` y
+`PUBLIC_URL` con la URL que devuelva.
+
+> ⚠️ **WhatsApp:** Meta solo entrega mensajes de texto libre dentro de una
+> ventana de 24 h de atención al cliente. Un comunicado en frío **necesita una
+> plantilla aprobada** (`META_TEMPLATE_NAME`); sin ella la API responde `200` y
+> el mensaje **nunca llega**. Detalle en
+> [docs/modulos/06-comunicados.md](docs/modulos/06-comunicados.md).
+
+---
+
+## pgAdmin
+
+- URL: http://localhost:5050 · `admin@urbanflow.test` / `admin`
+- Servidor: host `postgres`, puerto `5432`, BD `urbanflow`, usuario `postgres`,
+  contraseña `urbanflow2026`
 
 ---
 
 ## Documentación
 
-- [Schema de Base de Datos](docs/db-schema.md)
-- [Plan de Proyecto](docs/plan-proyecto.md)
-- [Spec de Diseño](docs/superpowers/specs/2026-05-08-gestion-fraccionamiento-design.md)
-
----
-
-## Roles de Usuario
-
-| Rol | Acceso |
-|-----|--------|
-| **Admin** | Dashboard completo, lotes, propietarios, cuotas, comunicados |
-| **Vigilante** | Caseta — registro entrada/salida, QR, notificaciones |
-| **Propietario** | Portal propio — estado de cuenta, pagos, incidencias, reservas |
-| **Técnico** | Tickets de mantenimiento asignados |
+| Documento | Contenido |
+|---|---|
+| [docs/db-schema.md](docs/db-schema.md) | Esquema implementado y las restricciones que impiden datos incoherentes |
+| [docs/decisiones.md](docs/decisiones.md) | Decisiones de arquitectura y por qué se tomaron |
+| [docs/pruebas-e2e.md](docs/pruebas-e2e.md) | Guion de prueba manual por rol |
+| [docs/plan-proyecto.md](docs/plan-proyecto.md) | Plan y cronograma del equipo |
+| [docs/modulos/](docs/modulos/) | Un documento por módulo, con las decisiones de cada uno |

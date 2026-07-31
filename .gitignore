@@ -32,3 +32,14 @@ server/uploads/
 
 # Python scripts (build tools, not part of app)
 docs/generar_excel.py
+
+# Configuración local de herramientas (rutas de la máquina de cada quien)
+.claude/
+
+# Colección de Bruno para pruebas manuales. Está desactualizada (define login
+# como GET) y la API ya está documentada en el README y probada con
+# server/scripts/smoke.js.
+UrbanFlow.yml
+
+# Copia de docs/plan-proyecto.xlsx con el nombre de entrega
+Plan_Equipo*.xlsx
