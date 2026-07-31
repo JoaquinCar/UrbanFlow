@@ -1,0 +1,23 @@
+meta {
+  name: 12 Panel de administracion
+  type: http
+  seq: 12
+}
+
+get {
+  url: {{baseUrl}}/fraccionamiento/dashboard
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{tokenAdmin}}
+}
+
+docs {
+  Métricas de los seis módulos en una sola consulta, para que todas
+  las cifras sean del mismo instante.
+  
+  Incluye actividad reciente: últimas visitas, tickets pendientes y mayores
+  adeudos.
+}

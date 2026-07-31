@@ -1,0 +1,19 @@
+meta {
+  name: 10 Mis visitas (propietario)
+  type: http
+  seq: 10
+}
+
+get {
+  url: {{baseUrl}}/visitas/mis-visitas
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{tokenPropietario}}
+}
+
+docs {
+  Visitas dirigidas a los lotes del propietario autenticado.
+}

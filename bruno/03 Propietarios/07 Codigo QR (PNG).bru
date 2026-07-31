@@ -1,0 +1,23 @@
+meta {
+  name: 07 Codigo QR (PNG)
+  type: http
+  seq: 7
+}
+
+get {
+  url: {{baseUrl}}/propietarios/{{propietarioId}}/qr?format=png
+  body: none
+  auth: none
+}
+
+params:query {
+  format: png
+}
+
+headers {
+  Authorization: Bearer {{tokenAdmin}}
+}
+
+docs {
+  La misma imagen como PNG binario, para descargar o imprimir.
+}

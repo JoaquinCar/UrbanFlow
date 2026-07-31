@@ -1,0 +1,25 @@
+meta {
+  name: 04 Disponibilidad de un area
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/reservaciones/areas/{{areaId}}/disponibilidad?fecha=2026-08-15
+  body: none
+  auth: none
+}
+
+params:query {
+  fecha: 2026-08-15
+}
+
+headers {
+  Authorization: Bearer {{tokenPropietario}}
+}
+
+docs {
+  Franjas ya ocupadas del día indicado. Es lo que pinta el calendario.
+  
+  `fecha` es obligatoria, en formato AAAA-MM-DD.
+}

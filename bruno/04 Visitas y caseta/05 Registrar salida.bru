@@ -1,0 +1,21 @@
+meta {
+  name: 05 Registrar salida
+  type: http
+  seq: 5
+}
+
+put {
+  url: {{baseUrl}}/visitas/{{visitaId}}/salida
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{tokenVigilante}}
+}
+
+docs {
+  Marca la salida.
+  
+  Distingue entre una visita inexistente (404) y una que ya salió (409).
+}

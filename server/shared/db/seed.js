@@ -64,9 +64,14 @@ async function upsertFraccionamiento(client, nombre, direccion, configMapa) {
   return rows[0]
 }
 
+// Con SEED_RESET_PASSWORDS=true el seed sí restablece las contraseñas. Sirve
+// para recuperar la base de pruebas después de que alguien cambie una desde la
+// API y se quede fuera.
+const RESET_PASSWORDS = process.env.SEED_RESET_PASSWORDS === 'true'
+
 async function upsertUsuario(client, u, hash) {
   // password_hash solo se escribe al insertar: volver a correr el seed no debe
-  // pisar una contraseña que alguien haya cambiado.
+  // pisar una contraseña que alguien haya cambiado a propósito.
   const { rows } = await client.query(
     `INSERT INTO usuarios (fraccionamiento_id, nombre, email, password_hash, rol)
      VALUES ($1, $2, $3, $4, $5)
@@ -74,9 +79,12 @@ async function upsertUsuario(client, u, hash) {
        SET nombre = EXCLUDED.nombre,
            rol = EXCLUDED.rol,
            fraccionamiento_id = EXCLUDED.fraccionamiento_id,
-           activo = TRUE
+           activo = TRUE,
+           password_hash = CASE WHEN $6 THEN EXCLUDED.password_hash
+                                ELSE usuarios.password_hash END,
+           refresh_token = CASE WHEN $6 THEN NULL ELSE usuarios.refresh_token END
      RETURNING id, email, rol`,
-    [u.fracId, u.nombre, u.email, hash, u.rol]
+    [u.fracId, u.nombre, u.email, hash, u.rol, RESET_PASSWORDS]
   )
   return rows[0]
 }

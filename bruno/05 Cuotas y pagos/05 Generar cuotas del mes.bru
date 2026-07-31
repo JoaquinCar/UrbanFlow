@@ -1,0 +1,26 @@
+meta {
+  name: 05 Generar cuotas del mes
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/pagos/cuotas/generar
+  body: json
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{tokenAdmin}}
+}
+
+body:json {
+  {}
+}
+
+docs {
+  Dispara a mano lo que el cron hace el día 1 de cada mes.
+  
+  Es idempotente: volver a llamarla no duplica cuotas. Además marca como
+  `vencido` las pendientes de meses anteriores.
+}

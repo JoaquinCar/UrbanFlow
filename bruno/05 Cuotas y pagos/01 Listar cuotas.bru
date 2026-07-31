@@ -1,0 +1,35 @@
+meta {
+  name: 01 Listar cuotas
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/pagos/cuotas?limit=100
+  body: none
+  auth: none
+}
+
+params:query {
+  limit: 100
+}
+
+headers {
+  Authorization: Bearer {{tokenAdmin}}
+}
+
+script:post-response {
+  if (res.getStatus() === 200 && res.body.items.length) {
+    const pend = res.body.items.find(c => c.estado_actual !== 'pagado');
+    if (pend) bru.setEnvVar("cuotaId", pend.id);
+  }
+}
+
+docs {
+  Cuotas con un resumen de montos cobrados y pendientes.
+  
+  `estado_actual` se calcula en la consulta: una cuota pendiente cuyo mes ya pasó
+  aparece como `vencido` aunque el enum almacenado no se haya actualizado.
+  
+  Filtros: `estado`, `mes`, `propietario_id`.
+}

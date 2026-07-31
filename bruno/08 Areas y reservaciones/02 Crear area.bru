@@ -1,0 +1,31 @@
+meta {
+  name: 02 Crear area
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/reservaciones/areas
+  body: json
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{tokenAdmin}}
+}
+
+body:json {
+  {
+    "nombre": "Gimnasio",
+    "capacidad": 12,
+    "activa": true
+  }
+}
+
+script:post-response {
+  if (res.getStatus() === 201) bru.setEnvVar("areaCreadaId", res.body.id);
+}
+
+docs {
+  Solo admin. El nombre es único dentro del fraccionamiento.
+}

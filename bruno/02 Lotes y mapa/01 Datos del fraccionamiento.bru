@@ -1,0 +1,19 @@
+meta {
+  name: 01 Datos del fraccionamiento
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/fraccionamiento
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{tokenAdmin}}
+}
+
+docs {
+  Fraccionamiento al que pertenece el token. Nunca se pasa por parámetro: sale del JWT.
+}

@@ -1,0 +1,29 @@
+meta {
+  name: 09 Listar pagos
+  type: http
+  seq: 9
+}
+
+get {
+  url: {{baseUrl}}/pagos?limit=100
+  body: none
+  auth: none
+}
+
+params:query {
+  limit: 100
+}
+
+headers {
+  Authorization: Bearer {{tokenAdmin}}
+}
+
+script:post-response {
+  if (res.getStatus() === 200 && res.body.items.length) {
+    bru.setEnvVar("pagoId", res.body.items[0].id);
+  }
+}
+
+docs {
+  Historial de pagos. Filtros: `desde`, `hasta`, `metodo`.
+}

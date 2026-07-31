@@ -1,0 +1,22 @@
+meta {
+  name: 10 Cancelar reservacion
+  type: http
+  seq: 10
+}
+
+put {
+  url: {{baseUrl}}/reservaciones/{{reservacionId}}/cancelar
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{tokenPropietario}}
+}
+
+docs {
+  Puede cancelar el dueño de la reserva o el admin.
+  
+  Cancelar libera el horario: la restricción de solapamiento no cuenta las
+  canceladas.
+}

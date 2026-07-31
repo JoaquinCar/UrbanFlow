@@ -1,0 +1,26 @@
+meta {
+  name: 03 Tecnicos disponibles
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/mantenimiento/tecnicos
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{tokenAdmin}}
+}
+
+script:post-response {
+  if (res.getStatus() === 200 && res.body.length) {
+    bru.setEnvVar("tecnicoId", res.body[0].id);
+  }
+}
+
+docs {
+  Técnicos activos con su carga de trabajo, ordenados de menor a mayor,
+  para poder repartir con criterio.
+}

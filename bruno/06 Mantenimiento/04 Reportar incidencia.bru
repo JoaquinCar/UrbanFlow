@@ -1,0 +1,33 @@
+meta {
+  name: 04 Reportar incidencia
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/mantenimiento
+  body: json
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{tokenPropietario}}
+}
+
+body:json {
+  {
+    "descripcion": "La luminaria de la calle lleva tres noches apagada",
+    "ubicacion": "Calle Palmas, frente al A-04"
+  }
+}
+
+script:post-response {
+  if (res.getStatus() === 201) bru.setEnvVar("ticketCreadoId", res.body.id);
+}
+
+docs {
+  Pueden reportar el propietario, el admin y el vigilante (es quien
+  detecta las averías durante su turno).
+  
+  Nace en estado `abierto` y sin técnico asignado.
+}

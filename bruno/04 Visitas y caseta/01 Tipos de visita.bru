@@ -1,0 +1,19 @@
+meta {
+  name: 01 Tipos de visita
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/visitas/tipos
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{tokenVigilante}}
+}
+
+docs {
+  Catálogo del enum: `visita`, `delivery`, `servicio`, `residente`.
+}

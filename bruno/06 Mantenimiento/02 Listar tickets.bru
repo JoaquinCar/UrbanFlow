@@ -1,0 +1,31 @@
+meta {
+  name: 02 Listar tickets
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/mantenimiento?limit=100
+  body: none
+  auth: none
+}
+
+params:query {
+  limit: 100
+}
+
+headers {
+  Authorization: Bearer {{tokenAdmin}}
+}
+
+script:post-response {
+  if (res.getStatus() === 200 && res.body.items.length) {
+    bru.setEnvVar("ticketId", res.body.items[0].id);
+  }
+}
+
+docs {
+  Todos los tickets del fraccionamiento, con los abiertos primero.
+  
+  Filtros: `estado`, `tecnico_id`, `q`.
+}

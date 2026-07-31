@@ -1,0 +1,26 @@
+meta {
+  name: 01 Listar areas
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/reservaciones/areas
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{tokenPropietario}}
+}
+
+script:post-response {
+  if (res.getStatus() === 200 && res.body.length) {
+    bru.setEnvVar("areaId", res.body[0].id);
+  }
+}
+
+docs {
+  Áreas comunes del fraccionamiento. Con `?activa=true` solo las
+  disponibles para reservar.
+}

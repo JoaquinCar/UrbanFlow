@@ -1,0 +1,27 @@
+meta {
+  name: 08 Rotar codigo QR
+  type: http
+  seq: 8
+}
+
+post {
+  url: {{baseUrl}}/propietarios/{{propietarioId}}/qr/rotar
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{tokenAdmin}}
+}
+
+script:post-response {
+  // Se guarda el token NUEVO: si no, la entrada por QR de la carpeta 04 seguiría
+  // usando el anterior, que esta petición acaba de invalidar.
+  if (res.getStatus() === 200) bru.setEnvVar("qrToken", res.body.qr_token);
+}
+
+docs {
+  Genera un QR nuevo e **invalida el anterior al instante**.
+  
+  Es la forma de revocar un código perdido o compartido por error.
+}

@@ -1,0 +1,28 @@
+meta {
+  name: 11 Checkout MercadoPago
+  type: http
+  seq: 11
+}
+
+post {
+  url: {{baseUrl}}/pagos/checkout
+  body: json
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{tokenPropietario}}
+}
+
+body:json {
+  {
+    "cuota_id": "{{cuotaPropiaId}}"
+  }
+}
+
+docs {
+  Crea una preferencia de pago y devuelve la URL del checkout.
+  
+  Sin `MP_ACCESS_TOKEN` configurado responde 500 con un mensaje explícito, en
+  lugar de simular un pago que no existe.
+}

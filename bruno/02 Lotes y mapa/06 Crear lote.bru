@@ -1,0 +1,36 @@
+meta {
+  name: 06 Crear lote
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{baseUrl}}/fraccionamiento/lotes
+  body: json
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{tokenAdmin}}
+}
+
+body:json {
+  {
+    "numero": "DEMO-01",
+    "etapa": "Etapa 1",
+    "superficie_m2": 250,
+    "precio": 990000,
+    "svg_path_id": "lote-DEMO-01"
+  }
+}
+
+script:post-response {
+  if (res.getStatus() === 201) bru.setEnvVar("loteCreadoId", res.body.id);
+}
+
+docs {
+  Solo admin. Nace en estado `disponible`.
+  
+  `svg_path_id` conecta el lote con la figura del plano; si se omite se genera
+  como `lote-<numero>`.
+}

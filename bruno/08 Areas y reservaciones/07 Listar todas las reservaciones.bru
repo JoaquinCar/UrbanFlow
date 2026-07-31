@@ -1,0 +1,23 @@
+meta {
+  name: 07 Listar todas las reservaciones
+  type: http
+  seq: 7
+}
+
+get {
+  url: {{baseUrl}}/reservaciones?limit=100
+  body: none
+  auth: none
+}
+
+params:query {
+  limit: 100
+}
+
+headers {
+  Authorization: Bearer {{tokenAdmin}}
+}
+
+docs {
+  Solo admin. Filtros: `area_id`, `fecha`, `estado`, `propietario_id`.
+}

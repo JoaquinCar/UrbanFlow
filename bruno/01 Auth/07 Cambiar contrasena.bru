@@ -1,0 +1,34 @@
+meta {
+  name: 07 Cambiar contrasena
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{baseUrl}}/auth/change-password
+  body: json
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{tokenAdmin}}
+}
+
+body:json {
+  {
+    "passwordActual": "UrbanFlow2026!",
+    "passwordNueva": "UrbanFlow2026!"
+  }
+}
+
+docs {
+  Cambia la contraseña del usuario autenticado.
+  
+  Invalida el refresh token, así que cierra la sesión en todos los dispositivos.
+  
+  Esta petición cambia la contraseña **por la misma**, a propósito: recorre todo
+  el camino sin dejar inservibles las credenciales del resto de la colección.
+  
+  Si pones otra y luego no puedes entrar, restaura con:
+  `SEED_RESET_PASSWORDS=true npm run seed --workspace=server`
+}

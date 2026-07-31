@@ -1,0 +1,25 @@
+meta {
+  name: 10 Listar documentos
+  type: http
+  seq: 10
+}
+
+get {
+  url: {{baseUrl}}/propietarios/{{propietarioId}}/documentos
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{tokenAdmin}}
+}
+
+script:post-response {
+  if (res.getStatus() === 200 && res.body.length) {
+    bru.setEnvVar("documentoId", res.body[0].id);
+  }
+}
+
+docs {
+  Metadatos, no el contenido. Guarda el primero en `documentoId`.
+}

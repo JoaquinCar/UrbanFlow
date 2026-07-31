@@ -1,0 +1,36 @@
+meta {
+  name: 02 Registrar entrada
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/visitas/entrada
+  body: json
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{tokenVigilante}}
+}
+
+body:json {
+  {
+    "lote_destino_id": "{{loteVendidoId}}",
+    "nombre_visitante": "Visitante Demo",
+    "tipo": "visita",
+    "placa_vehiculo": "DEMO-01",
+    "notas": "Registro de prueba"
+  }
+}
+
+script:post-response {
+  if (res.getStatus() === 201) bru.setEnvVar("visitaId", res.body.id);
+}
+
+docs {
+  Registra la entrada y emite el evento `nueva-visita` por Socket.io a
+  la sala de la caseta.
+  
+  Requiere `loteVendidoId`: ejecuta antes «Listar lotes» en la carpeta 02.
+}

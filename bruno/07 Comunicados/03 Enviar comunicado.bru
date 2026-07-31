@@ -1,0 +1,40 @@
+meta {
+  name: 03 Enviar comunicado
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/comunicados
+  body: json
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{tokenAdmin}}
+}
+
+body:json {
+  {
+    "titulo": "Corte de agua programado",
+    "cuerpo": "El martes de 9 a 14 h habrá corte por mantenimiento de la red.",
+    "canales": {
+      "email": true,
+      "whatsapp": false
+    }
+  }
+}
+
+script:post-response {
+  if (res.getStatus() === 201) bru.setEnvVar("comunicadoId", res.body.comunicado.id);
+}
+
+docs {
+  Registra el comunicado y lo envía por los canales marcados.
+  
+  Se puede acotar a ciertos propietarios con
+  `"destinatarios": ["id1", "id2"]`; si se omite, van todos.
+  
+  El registro se guarda **aunque el envío falle**: la respuesta trae el detalle
+  de cuántos se enviaron y cuántos fallaron por canal.
+}

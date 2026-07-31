@@ -1,0 +1,30 @@
+meta {
+  name: 04 Crear cuota extraordinaria
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/pagos/cuotas
+  body: json
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{tokenAdmin}}
+}
+
+body:json {
+  {
+    "propietario_id": "todos",
+    "monto": 2500,
+    "concepto": "Reparación del portón principal"
+  }
+}
+
+docs {
+  Crea una cuota extraordinaria para un propietario o para **todos**
+  los que tienen lote vendido.
+  
+  Con `propietario_id: "todos"` se genera una por cada uno.
+}

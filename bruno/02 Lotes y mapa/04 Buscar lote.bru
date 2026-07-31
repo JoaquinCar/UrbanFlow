@@ -1,0 +1,23 @@
+meta {
+  name: 04 Buscar lote
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/fraccionamiento/lotes?q=A-0
+  body: none
+  auth: none
+}
+
+params:query {
+  q: A-0
+}
+
+headers {
+  Authorization: Bearer {{tokenAdmin}}
+}
+
+docs {
+  Búsqueda por número de lote o por nombre del propietario.
+}

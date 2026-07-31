@@ -1,0 +1,20 @@
+meta {
+  name: 05 Mis tickets
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/mantenimiento/mios
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{tokenPropietario}}
+}
+
+docs {
+  Un mismo endpoint para dos roles: al propietario le devuelve los que
+  reportó, al técnico los que le asignaron.
+}

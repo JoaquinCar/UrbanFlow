@@ -1,0 +1,15 @@
+meta {
+  name: 08 Cerrar sesion
+  type: http
+  seq: 8
+}
+
+post {
+  url: {{baseUrl}}/auth/logout
+  body: none
+  auth: none
+}
+
+docs {
+  Invalida el refresh token en la base y borra la cookie.
+}

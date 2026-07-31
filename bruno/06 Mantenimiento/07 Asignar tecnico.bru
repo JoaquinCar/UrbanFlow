@@ -1,0 +1,30 @@
+meta {
+  name: 07 Asignar tecnico
+  type: http
+  seq: 7
+}
+
+put {
+  url: {{baseUrl}}/mantenimiento/{{ticketCreadoId}}/asignar
+  body: json
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{tokenAdmin}}
+}
+
+body:json {
+  {
+    "tecnico_id": "{{tokenTecnicoId}}"
+  }
+}
+
+docs {
+  Asignar un técnico pasa el ticket a `en_proceso` en la misma
+  operación: un ticket con técnico que siguiera «abierto» sería ambiguo.
+  
+  Se asigna a `tokenTecnicoId`, que es el técnico con cuyo token trabaja la
+  petición siguiente. Si se usara el primero de «Técnicos disponibles» —que
+  ordena por menor carga— podría ser otro y «Cambiar estado» daría 403.
+}

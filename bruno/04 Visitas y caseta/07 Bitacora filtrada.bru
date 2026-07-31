@@ -1,0 +1,23 @@
+meta {
+  name: 07 Bitacora filtrada
+  type: http
+  seq: 7
+}
+
+get {
+  url: {{baseUrl}}/visitas/bitacora?tipo=delivery
+  body: none
+  auth: none
+}
+
+params:query {
+  tipo: delivery
+}
+
+headers {
+  Authorization: Bearer {{tokenAdmin}}
+}
+
+docs {
+  Filtro por tipo de acceso.
+}

@@ -1,0 +1,21 @@
+meta {
+  name: 06 Tablon de avisos (residente)
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{baseUrl}}/comunicados/mios
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{tokenPropietario}}
+}
+
+docs {
+  Lo que ve un residente: título, cuerpo, fecha y autor.
+  
+  Sin los detalles de entrega, que solo le interesan a quien administra.
+}

@@ -1,0 +1,29 @@
+meta {
+  name: 06 Codigo QR (data URL)
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{baseUrl}}/propietarios/{{propietarioId}}/qr
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{tokenAdmin}}
+}
+
+script:post-response {
+  if (res.getStatus() === 200) bru.setEnvVar("qrToken", res.body.qr_token);
+}
+
+docs {
+  Devuelve el token del QR y su imagen como data URL lista para un
+  `<img>`.
+  
+  El token es un JWT firmado con `QR_SECRET`, **sin expiración**. Se revoca
+  rotándolo o desactivando al usuario.
+  
+  Guarda el token en `qrToken` para la petición de entrada por QR.
+}

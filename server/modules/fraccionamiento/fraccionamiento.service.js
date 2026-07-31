@@ -135,7 +135,10 @@ async function crearLote(fraccionamientoId, datos) {
     return rows[0]
   } catch (err) {
     if (err.code === '23505') throw httpError(409, `Ya existe el lote ${numero} en este fraccionamiento`)
-    if (err.code === '22P02') throw httpError(400, 'Estado de lote inválido')
+    // Solo se culpa al estado si el estado fue lo que se envió. Antes se
+    // atribuía cualquier 22P02 al enum, así que un precio no numérico
+    // respondía "Estado de lote inválido", que despista más que ayudar.
+    if (err.code === '22P02' && estado) throw httpError(400, `Estado de lote inválido: ${estado}`)
     throw err
   }
 }
@@ -163,7 +166,10 @@ async function actualizarLote(fraccionamientoId, id, datos) {
     return rows[0]
   } catch (err) {
     if (err.code === '23505') throw httpError(409, `Ya existe el lote ${numero} en este fraccionamiento`)
-    if (err.code === '22P02') throw httpError(400, 'Estado de lote inválido')
+    // Solo se culpa al estado si el estado fue lo que se envió. Antes se
+    // atribuía cualquier 22P02 al enum, así que un precio no numérico
+    // respondía "Estado de lote inválido", que despista más que ayudar.
+    if (err.code === '22P02' && estado) throw httpError(400, `Estado de lote inválido: ${estado}`)
     throw err
   }
 }

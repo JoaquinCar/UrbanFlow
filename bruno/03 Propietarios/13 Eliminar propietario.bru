@@ -1,0 +1,20 @@
+meta {
+  name: 13 Eliminar propietario
+  type: http
+  seq: 13
+}
+
+delete {
+  url: {{baseUrl}}/propietarios/{{propietarioCreadoId}}
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{tokenAdmin}}
+}
+
+docs {
+  Elimina también su usuario y sus documentos, y devuelve sus lotes a
+  `disponible`.
+}

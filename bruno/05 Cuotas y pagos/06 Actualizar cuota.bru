@@ -1,0 +1,21 @@
+meta {
+  name: 06 Actualizar cuota
+  type: http
+  seq: 6
+}
+
+put {
+  url: {{baseUrl}}/pagos/cuotas/{{cuotaId}}
+  body: json
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{tokenAdmin}}
+}
+
+body:json {
+  {
+    "monto": 1600
+  }
+}

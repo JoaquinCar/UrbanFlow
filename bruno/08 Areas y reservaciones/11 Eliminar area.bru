@@ -1,0 +1,20 @@
+meta {
+  name: 11 Eliminar area
+  type: http
+  seq: 11
+}
+
+delete {
+  url: {{baseUrl}}/reservaciones/areas/{{areaCreadaId}}
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{tokenAdmin}}
+}
+
+docs {
+  Un área con reservaciones registradas no se puede eliminar: la
+  respuesta sugiere desactivarla en su lugar.
+}

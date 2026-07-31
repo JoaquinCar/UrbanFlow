@@ -1,0 +1,20 @@
+meta {
+  name: 07 Morosos
+  type: http
+  seq: 7
+}
+
+get {
+  url: {{baseUrl}}/pagos/morosos
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{tokenAdmin}}
+}
+
+docs {
+  Propietarios con cuotas de meses anteriores sin pagar, con el monto
+  adeudado y sus datos de contacto.
+}

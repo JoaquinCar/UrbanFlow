@@ -1,0 +1,19 @@
+meta {
+  name: 04 Quien esta dentro
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/visitas/activas
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{tokenVigilante}}
+}
+
+docs {
+  Visitas sin salida registrada. Es la pantalla principal de la caseta.
+}

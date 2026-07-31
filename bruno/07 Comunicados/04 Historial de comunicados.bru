@@ -1,0 +1,23 @@
+meta {
+  name: 04 Historial de comunicados
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/comunicados?limit=50
+  body: none
+  auth: none
+}
+
+params:query {
+  limit: 50
+}
+
+headers {
+  Authorization: Bearer {{tokenAdmin}}
+}
+
+docs {
+  Incluye el resultado de entrega de cada envío.
+}

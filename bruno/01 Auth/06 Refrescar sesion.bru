@@ -1,0 +1,19 @@
+meta {
+  name: 06 Refrescar sesion
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{baseUrl}}/auth/refresh
+  body: none
+  auth: none
+}
+
+docs {
+  Renueva el access token usando la cookie `refreshToken`.
+  
+  No lleva cabecera Authorization: se identifica solo con la cookie.
+  
+  El refresh token **rota** en cada uso: el anterior queda invalidado.
+}

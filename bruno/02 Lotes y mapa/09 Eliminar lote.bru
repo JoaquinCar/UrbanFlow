@@ -1,0 +1,19 @@
+meta {
+  name: 09 Eliminar lote
+  type: http
+  seq: 9
+}
+
+delete {
+  url: {{baseUrl}}/fraccionamiento/lotes/{{loteCreadoId}}
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{tokenAdmin}}
+}
+
+docs {
+  Responde 204 sin cuerpo. Un lote con visitas registradas no se puede eliminar.
+}

@@ -1,0 +1,23 @@
+meta {
+  name: 03 Listar lotes vendidos
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/fraccionamiento/lotes?estado=vendido
+  body: none
+  auth: none
+}
+
+params:query {
+  estado: vendido
+}
+
+headers {
+  Authorization: Bearer {{tokenAdmin}}
+}
+
+docs {
+  Filtro por estado. Valores posibles: `disponible`, `proceso`, `vendido`.
+}

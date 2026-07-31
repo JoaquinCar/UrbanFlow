@@ -1,0 +1,25 @@
+meta {
+  name: 09 Confirmar reservacion
+  type: http
+  seq: 9
+}
+
+put {
+  url: {{baseUrl}}/reservaciones/{{reservacionId}}
+  body: json
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{tokenAdmin}}
+}
+
+body:json {
+  {
+    "estado": "confirmada"
+  }
+}
+
+docs {
+  Solo admin. Estados: `pendiente`, `confirmada`, `cancelada`.
+}

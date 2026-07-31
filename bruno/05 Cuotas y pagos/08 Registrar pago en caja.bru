@@ -1,0 +1,34 @@
+meta {
+  name: 08 Registrar pago en caja
+  type: http
+  seq: 8
+}
+
+post {
+  url: {{baseUrl}}/pagos/manual
+  body: json
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{tokenAdmin}}
+}
+
+body:json {
+  {
+    "cuota_id": "{{cuotaId}}",
+    "monto_pagado": 1500,
+    "metodo": "efectivo",
+    "referencia": "CAJA-001"
+  }
+}
+
+script:post-response {
+  if (res.getStatus() === 201) bru.setEnvVar("pagoId", res.body.id);
+}
+
+docs {
+  Cobro presencial. Métodos: `efectivo` o `transferencia`.
+  
+  Marca la cuota como pagada en la misma transacción.
+}
