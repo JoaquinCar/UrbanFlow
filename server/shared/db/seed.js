@@ -266,6 +266,82 @@ async function seed() {
 
     console.log(`  ✓ visitas      ${visitas} en los últimos 30 días (${dentro} aún dentro)`)
 
+    // ── Cuotas y pagos ───────────────────────────────────────────────────────
+    // Los pagos se borran y regeneran; las cuotas mensuales sí tienen clave
+    // natural (el índice parcial propietario+mes), así que van por upsert.
+    await client.query(
+      `DELETE FROM pagos pg USING cuotas c
+       WHERE c.id = pg.cuota_id AND c.fraccionamiento_id = $1`,
+      [fracId1]
+    )
+    await client.query(
+      `DELETE FROM cuotas WHERE fraccionamiento_id = $1 AND tipo = 'extraordinaria'`,
+      [fracId1]
+    )
+
+    const MONTO = parseFloat(process.env.MONTO_CUOTA_MENSUAL) || 1500
+    let cuotasCreadas = 0
+    let pagosCreados = 0
+    let morosos = 0
+
+    for (let p = 0; p < propsCreados.length; p++) {
+      const propId = propsCreados[p].id
+
+      // Seis meses hacia atrás, contando el actual.
+      for (let m = 5; m >= 0; m--) {
+        // Los tres primeros propietarios generan un moroso cada uno en el mes
+        // anterior, para que el reporte de morosidad tenga contenido.
+        const esMesAnterior = m === 1
+        const esMesActual = m === 0
+        const dejarPendiente = esMesActual || (esMesAnterior && p === 0)
+
+        const { rows: cuotaRows } = await client.query(
+          `INSERT INTO cuotas (fraccionamiento_id, propietario_id, tipo, monto, mes_anio, estado)
+           VALUES ($1, $2, 'mensual', $3,
+                   (date_trunc('month', CURRENT_DATE) - ($4 || ' months')::interval)::date,
+                   $5::estado_cuota)
+           ON CONFLICT (propietario_id, mes_anio) WHERE tipo = 'mensual'
+           DO UPDATE SET monto = EXCLUDED.monto, estado = EXCLUDED.estado
+           RETURNING id`,
+          [fracId1, propId, MONTO, m, dejarPendiente ? 'pendiente' : 'pagado']
+        )
+        cuotasCreadas++
+
+        if (dejarPendiente) {
+          if (esMesAnterior) morosos++
+          continue
+        }
+
+        // Cada cuota pagada lleva su pago, alternando método.
+        const metodos = ['efectivo', 'transferencia', 'online']
+        const metodo = metodos[(p + m) % metodos.length]
+        await client.query(
+          `INSERT INTO pagos (cuota_id, monto_pagado, metodo, referencia_mp, fecha_pago)
+           VALUES ($1, $2, $3::metodo_pago, $4,
+                   date_trunc('month', CURRENT_DATE) - ($5 || ' months')::interval + interval '5 days')`,
+          [
+            cuotaRows[0].id, MONTO, metodo,
+            metodo === 'online' ? `SEED-MP-${propId.slice(0, 8)}-${m}` : null,
+            m,
+          ]
+        )
+        pagosCreados++
+      }
+    }
+
+    // Dos cuotas extraordinarias para todos, con concepto real.
+    for (const prop of propsCreados) {
+      await client.query(
+        `INSERT INTO cuotas (fraccionamiento_id, propietario_id, tipo, monto, mes_anio, estado, concepto)
+         VALUES ($1, $2, 'extraordinaria', 2500, date_trunc('month', CURRENT_DATE)::date, 'pendiente',
+                 'Reparación del portón principal')`,
+        [fracId1, prop.id]
+      )
+      cuotasCreadas++
+    }
+
+    console.log(`  ✓ cuotas       ${cuotasCreadas} (${pagosCreados} pagadas, ${morosos} moroso(s))`)
+
     await client.query('COMMIT')
     console.log(`\nPassword para todos: ${DEFAULT_PASSWORD}`)
     console.log('Seed completado.')

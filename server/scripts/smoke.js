@@ -416,6 +416,169 @@ const SUITES = {
     }
     check('limpieza: las entradas por QR quedan cerradas', true)
   },
+
+  payments: async (ctx) => {
+    const r1 = await req('GET', '/pagos/cuotas', { token: ctx.admin })
+    check('lista de cuotas con resumen de montos',
+      r1.status === 200 && r1.data.total > 0 && r1.data.resumen.monto_cobrado !== undefined,
+      r1.data?.resumen)
+
+    const r2 = await req('GET', '/pagos/cuotas/mias', { token: ctx.propietario })
+    check('estado de cuenta propio con totales',
+      r2.status === 200 && r2.data.cuotas.length > 0 && typeof r2.data.totales.adeudo === 'number',
+      r2.data?.totales)
+    check('el estado de cuenta calcula el adeudo',
+      r2.data.totales.adeudo === r2.data.totales.pendiente + r2.data.totales.vencido,
+      r2.data?.totales)
+
+    const r3 = await req('GET', '/pagos/cuotas', { token: ctx.propietario })
+    check('un propietario no puede listar todas las cuotas → 403', r3.status === 403, r3.data)
+
+    // ── morosidad ──
+    const r4 = await req('GET', '/pagos/morosos', { token: ctx.admin })
+    check('el reporte de morosos trae monto adeudado',
+      r4.status === 200 && r4.data.length > 0 && Number(r4.data[0].monto_adeudado) > 0, r4.data?.[0])
+
+    // ── cuota extraordinaria ──
+    const r5 = await req('POST', '/pagos/cuotas', {
+      token: ctx.admin,
+      body: { propietario_id: 'todos', monto: 750, concepto: 'QA prueba extraordinaria' },
+    })
+    check('cuota extraordinaria para todos → 201',
+      r5.status === 201 && r5.data.creadas >= 3, r5.data)
+
+    const r6 = await req('POST', '/pagos/cuotas', {
+      token: ctx.admin, body: { propietario_id: 'todos', monto: -5, concepto: 'X' },
+    })
+    check('monto negativo → 400', r6.status === 400, r6.data)
+
+    const r7 = await req('POST', '/pagos/cuotas', {
+      token: ctx.admin, body: { propietario_id: 'todos', monto: 100 },
+    })
+    check('sin concepto → 400', r7.status === 400, r7.data)
+
+    // Se paga la cuota de OTRO propietario, no la del que inicia sesión en las
+    // pruebas: así el recibo resultante sirve para comprobar el 403.
+    const miFicha = await req('GET', '/propietarios/me', { token: ctx.propietario })
+    const listado = await req('GET', '/pagos/cuotas?estado=pendiente&limit=500', { token: ctx.admin })
+    const cuotaQa = listado.data.items.find(
+      c => c.concepto === 'QA prueba extraordinaria' && c.propietario_id !== miFicha.data.id
+    )
+    check('la cuota extraordinaria aparece en el listado', !!cuotaQa, cuotaQa?.concepto)
+
+    // ── pago manual ──
+    const r8 = await req('POST', '/pagos/manual', {
+      token: ctx.admin,
+      body: { cuota_id: cuotaQa.id, monto_pagado: 750, metodo: 'efectivo', referencia: 'QA-CAJA-01' },
+    })
+    check('pago manual en efectivo → 201', r8.status === 201 && r8.data.metodo === 'efectivo', r8.data)
+    const pagoId = r8.data?.id
+
+    const r9 = await req('GET', `/pagos/cuotas/${cuotaQa.propietario_id}`, { token: ctx.admin })
+    const cuotaTrasPago = r9.data.cuotas.find(c => c.id === cuotaQa.id)
+    check('la cuota queda marcada como pagada', cuotaTrasPago?.estado === 'pagado', cuotaTrasPago?.estado)
+
+    const r10 = await req('POST', '/pagos/manual', {
+      token: ctx.admin, body: { cuota_id: cuotaQa.id, monto_pagado: 750, metodo: 'efectivo' },
+    })
+    check('pagar dos veces la misma cuota → 409', r10.status === 409, r10.data)
+
+    const r11 = await req('POST', '/pagos/manual', {
+      token: ctx.admin, body: { cuota_id: cuotaQa.id, monto_pagado: 100, metodo: 'bitcoin' },
+    })
+    check('método de pago inválido → 400', r11.status === 400, r11.data)
+
+    // Regresión: la unicidad de referencia_mp debe aplicar solo a los pagos en
+    // línea. Dos cobros de caja con el mismo folio son legítimos.
+    const otraCuota = listado.data.items.find(
+      c => c.concepto === 'QA prueba extraordinaria' && c.id !== cuotaQa.id
+    )
+    if (otraCuota) {
+      const r11b = await req('POST', '/pagos/manual', {
+        token: ctx.admin,
+        body: { cuota_id: otraCuota.id, monto_pagado: 750, metodo: 'efectivo', referencia: 'QA-CAJA-01' },
+      })
+      check('dos cobros manuales pueden repetir folio de caja', r11b.status === 201, r11b.data)
+    }
+
+    const r12 = await req('DELETE', `/pagos/cuotas/${cuotaQa.id}`, { token: ctx.admin })
+    check('no se puede borrar una cuota con pagos → 409', r12.status === 409, r12.data)
+
+    // ── recibo PDF ──
+    const r13 = await req('GET', `/pagos/${pagoId}/pdf`, { token: ctx.admin })
+    check('el recibo se sirve como PDF real',
+      r13.status === 200 && Buffer.isBuffer(r13.data) && r13.data.subarray(0, 4).toString() === '%PDF',
+      r13.data?.subarray?.(0, 8)?.toString())
+    check('el PDF tiene contenido', r13.data.length > 1000, r13.data?.length)
+    check('el recibo se descarga con nombre de archivo',
+      /recibo-.*\.pdf/.test(r13.headers.get('content-disposition') ?? ''),
+      r13.headers.get('content-disposition'))
+
+    const r14 = await req('GET', `/pagos/${pagoId}/pdf`, { token: ctx.propietario })
+    check('un propietario no descarga recibos ajenos → 403', r14.status === 403, r14.data)
+
+    // ── webhook de MercadoPago ──
+    const r15 = await req('POST', '/pagos/webhook?type=payment&data.id=123', { body: {} })
+    check('webhook sin firma → 401', r15.status === 401, r15.data)
+
+    const r16 = await req('POST', '/pagos/webhook?type=payment&data.id=123', {
+      body: {}, headers: { 'x-signature': 'ts=1,v1=deadbeef', 'x-request-id': 'abc' },
+    })
+    check('webhook con firma inválida → 401', r16.status === 401, r16.data)
+
+    // Firma HMAC válida calculada localmente: demuestra que el manifiesto se
+    // construye igual que en MercadoPago, sin necesitar credenciales suyas.
+    const secret = process.env.MP_WEBHOOK_SECRET
+    if (secret) {
+      const crypto = require('crypto')
+      const ts = '1700000000'
+      const manifest = `id:123;request-id:req-qa;ts:${ts};`
+      const v1 = crypto.createHmac('sha256', secret).update(manifest).digest('hex')
+      const r17 = await req('POST', '/pagos/webhook?type=payment&data.id=123', {
+        body: {}, headers: { 'x-signature': `ts=${ts},v1=${v1}`, 'x-request-id': 'req-qa' },
+      })
+      check('webhook con firma válida no da 401 (el manifiesto es correcto)',
+        r17.status !== 401, `${r17.status} ${JSON.stringify(r17.data)}`)
+    } else {
+      check('MP_WEBHOOK_SECRET sin configurar: se omite la prueba de firma válida', true)
+    }
+
+    // ── checkout: sin credenciales debe fallar con un mensaje claro ──
+    const cuotaPendiente = listado.data.items.find(c => c.id !== cuotaQa.id)
+    const r18 = await req('POST', '/pagos/checkout', {
+      token: ctx.admin, body: { cuota_id: cuotaPendiente.id },
+    })
+    if (process.env.MP_ACCESS_TOKEN) {
+      check('checkout crea preferencia de MercadoPago', r18.status === 201 && !!r18.data.init_point, r18.data)
+    } else {
+      check('sin MP_ACCESS_TOKEN el checkout falla con mensaje explícito',
+        r18.status === 500 && /MP_ACCESS_TOKEN no configurado/.test(r18.data.error ?? ''), r18.data)
+    }
+
+    const r19 = await req('POST', '/pagos/checkout', { token: ctx.admin, body: {} })
+    check('checkout sin cuota_id → 400', r19.status === 400, r19.data)
+
+    // ── generación mensual a mano ──
+    const r20 = await req('POST', '/pagos/cuotas/generar', { token: ctx.admin, body: {} })
+    check('generar cuotas del mes responde conteos',
+      r20.status === 200 && typeof r20.data.insertadas === 'number', r20.data)
+
+    // Regresión: "generar" marca las atrasadas como 'vencido'. Si el reporte de
+    // morosos solo mirara estado='pendiente', se vaciaría justo después.
+    const r21 = await req('GET', '/pagos/morosos', { token: ctx.admin })
+    check('los morosos siguen apareciendo tras marcar las cuotas vencidas',
+      r21.status === 200 && r21.data.length > 0, r21.data?.length)
+
+    // ── limpieza ──
+    const pendientesQa = await req('GET', '/pagos/cuotas?limit=500', { token: ctx.admin })
+    const aBorrar = pendientesQa.data.items.filter(c => c.concepto === 'QA prueba extraordinaria')
+    for (const c of aBorrar) {
+      // La que tiene pago no se puede borrar hasta quitar el pago; se deja y se
+      // reconstruye con el seed. Las demás sí.
+      await req('DELETE', `/pagos/cuotas/${c.id}`, { token: ctx.admin })
+    }
+    check('limpieza de cuotas de prueba ejecutada', true)
+  },
 }
 
 async function main() {

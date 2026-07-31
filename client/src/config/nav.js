@@ -29,7 +29,7 @@ export const NAV_ITEMS = [
   { label: 'Lotes',               icon: HiSquares2X2,            path: '/lotes',         roles: ['admin'] },
   { label: 'Mapa',                icon: HiMap,                   path: '/mapa',          roles: ['admin'] },
   { label: 'Propietarios',        icon: HiUsers,                 path: '/owners',        roles: ['admin'] },
-  { label: 'Cuotas',              icon: HiBanknotes,             path: '/cuotas',        roles: ['admin'],                            pendiente: true },
+  { label: 'Cuotas',              icon: HiBanknotes,             path: '/cuotas',        roles: ['admin'] },
   { label: 'Mi estado de cuenta', icon: HiBanknotes,             path: '/payments',      roles: ['propietario'] },
   { label: 'Mi acceso (QR)',      icon: HiQrCode,                path: '/access',        roles: ['propietario'] },
   { label: 'Mantenimiento',       icon: HiWrenchScrewdriver,     path: '/mantenimiento', roles: ['admin', 'tecnico', 'propietario'],  pendiente: true },
