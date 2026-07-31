@@ -1,0 +1,19 @@
+meta {
+  name: 11 Etapas
+  type: http
+  seq: 11
+}
+
+get {
+  url: {{baseUrl}}/fraccionamiento/etapas
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{tokenAdmin}}
+}
+
+docs {
+  Etapas existentes, derivadas de los lotes. Alimenta el filtro de la interfaz.
+}

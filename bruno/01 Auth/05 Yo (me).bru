@@ -1,0 +1,19 @@
+meta {
+  name: 05 Yo (me)
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/auth/me
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{tokenAdmin}}
+}
+
+docs {
+  Datos del usuario dueño del token, incluido su `fraccionamiento_id`.
+}

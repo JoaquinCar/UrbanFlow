@@ -1,0 +1,21 @@
+meta {
+  name: 10 Descargar recibo PDF
+  type: http
+  seq: 10
+}
+
+get {
+  url: {{baseUrl}}/pagos/{{pagoId}}/pdf
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{tokenAdmin}}
+}
+
+docs {
+  Recibo en PDF generado en memoria al vuelo.
+  
+  No se guarda en disco: `pagos.pdf_url` queda siempre en `NULL`.
+}

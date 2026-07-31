@@ -1,0 +1,36 @@
+meta {
+  name: 04 Login tecnico
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/auth/login
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "email": "tecnico@urbanflow.test",
+    "password": "UrbanFlow2026!"
+  }
+}
+
+script:post-response {
+  if (res.getStatus() === 200) {
+    bru.setEnvVar("tokenTecnico", res.body.accessToken);
+    bru.setEnvVar("tokenTecnicoId", res.body.user.id);
+  }
+}
+
+docs {
+  Inicia sesión como tecnico y guarda el token en la variable
+  `tokenTecnico`, que usan el resto de peticiones de la colección.
+  
+  Devuelve además una cookie httpOnly `refreshToken` que Bruno conserva
+  automáticamente y que usa la petición de refrescar sesión.
+  
+  **Ejecuta los cuatro logins antes que nada.** El resto de carpetas los
+  necesitan.
+}

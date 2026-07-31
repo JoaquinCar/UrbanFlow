@@ -1,0 +1,32 @@
+meta {
+  name: 01 Listar propietarios
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/propietarios?limit=100
+  body: none
+  auth: none
+}
+
+params:query {
+  limit: 100
+}
+
+headers {
+  Authorization: Bearer {{tokenAdmin}}
+}
+
+script:post-response {
+  if (res.getStatus() === 200 && res.body.items.length) {
+    bru.setEnvVar("propietarioId", res.body.items[0].id);
+  }
+}
+
+docs {
+  Cada propietario viene con sus lotes agregados y el correo de su
+  usuario. Admin y vigilante.
+  
+  Guarda el primero en `propietarioId`.
+}

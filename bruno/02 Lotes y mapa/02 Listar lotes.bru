@@ -1,0 +1,41 @@
+meta {
+  name: 02 Listar lotes
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/fraccionamiento/lotes?limit=200
+  body: none
+  auth: none
+}
+
+params:query {
+  limit: 200
+}
+
+headers {
+  Authorization: Bearer {{tokenAdmin}}
+}
+
+script:post-response {
+  if (res.getStatus() === 200 && res.body.items.length) {
+    bru.setEnvVar("loteId", res.body.items[0].id);
+    const vendido = res.body.items.find(l => l.propietario_id);
+    if (vendido) {
+      bru.setEnvVar("loteVendidoId", vendido.id);
+      // También el propietario, para que "Asignar propietario" no dependa de
+      // haber corrido antes la carpeta 03.
+      bru.setEnvVar("propietarioId", vendido.propietario_id);
+    }
+  }
+}
+
+docs {
+  Lista paginada con el nombre del propietario resuelto.
+  
+  Guarda el primer lote en `loteId` para las peticiones siguientes.
+  
+  Filtros disponibles: `estado`, `etapa`, `q` (busca por número o propietario),
+  `limit`, `offset`.
+}

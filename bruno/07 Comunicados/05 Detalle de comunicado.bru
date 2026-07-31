@@ -1,0 +1,15 @@
+meta {
+  name: 05 Detalle de comunicado
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/comunicados/{{comunicadoId}}
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{tokenAdmin}}
+}

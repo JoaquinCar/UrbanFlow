@@ -1,0 +1,21 @@
+meta {
+  name: 02 Mi ficha
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/propietarios/me
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{tokenPropietario}}
+}
+
+docs {
+  Ficha del propietario autenticado, sin necesidad de conocer su id.
+  
+  Solo rol propietario.
+}

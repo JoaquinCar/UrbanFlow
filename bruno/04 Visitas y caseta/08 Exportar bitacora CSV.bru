@@ -1,0 +1,21 @@
+meta {
+  name: 08 Exportar bitacora CSV
+  type: http
+  seq: 8
+}
+
+get {
+  url: {{baseUrl}}/visitas/bitacora.csv
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{tokenAdmin}}
+}
+
+docs {
+  Exporta en CSV con BOM UTF-8, para que Excel no destroce los acentos.
+  
+  Acepta los mismos filtros que la bitácora.
+}

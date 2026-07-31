@@ -152,6 +152,14 @@ npm run smoke --workspace=server -- --only=visits # una sola suite
 `auth`, `fraccionamiento`, `dashboard`, `owners`, `visits`, `payments`,
 `maintenance`, `comms`, `reservations`.
 
+### Colección de Bruno
+
+Los 87 endpoints en [`bruno/`](bruno/), listos para abrir con
+[Bruno](https://www.usebruno.com) y ejecutar de arriba abajo: los logins guardan
+los tokens y cada petición encadena los datos que necesita la siguiente.
+
+Ver [bruno/README.md](bruno/README.md).
+
 ### Verificación en navegador
 
 Además hay scripts que manejan un navegador real y comprueban lo que la API no
@@ -308,4 +316,5 @@ responden con un error explícito en lugar de simular éxito.
 | [docs/decisiones.md](docs/decisiones.md) | Decisiones de arquitectura y por qué se tomaron |
 | [docs/pruebas-e2e.md](docs/pruebas-e2e.md) | Guion de prueba manual por rol |
 | [docs/plan-proyecto.md](docs/plan-proyecto.md) | Plan y cronograma del equipo |
+| [bruno/README.md](bruno/README.md) | Colección de Bruno con los 87 endpoints |
 | [docs/modulos/](docs/modulos/) | Un documento por módulo, con las decisiones de cada uno |

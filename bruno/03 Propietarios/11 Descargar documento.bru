@@ -1,0 +1,20 @@
+meta {
+  name: 11 Descargar documento
+  type: http
+  seq: 11
+}
+
+get {
+  url: {{baseUrl}}/propietarios/documentos/{{documentoId}}
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{tokenAdmin}}
+}
+
+docs {
+  Devuelve el archivo con su nombre original, aunque en disco esté
+  guardado con un UUID.
+}

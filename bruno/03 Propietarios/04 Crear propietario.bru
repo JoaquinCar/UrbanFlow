@@ -1,0 +1,37 @@
+meta {
+  name: 04 Crear propietario
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/propietarios
+  body: json
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{tokenAdmin}}
+}
+
+body:json {
+  {
+    "nombre_completo": "Demo Propietario",
+    "email": "demo@urbanflow.test",
+    "telefono": "6670000000",
+    "whatsapp": "+526670000000",
+    "curp": "DEPR900101HSLMMR01",
+    "num_escritura": "ESC-DEMO-01"
+  }
+}
+
+script:post-response {
+  if (res.getStatus() === 201) bru.setEnvVar("propietarioCreadoId", res.body.id);
+}
+
+docs {
+  Crea el propietario, su usuario con rol `propietario` y su código QR,
+  todo en una transacción.
+  
+  Si no se envía `password`, se usa la del seed (`UrbanFlow2026!`).
+}

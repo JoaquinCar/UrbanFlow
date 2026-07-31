@@ -1,0 +1,28 @@
+meta {
+  name: 02 Mi estado de cuenta
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/pagos/cuotas/mias
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{tokenPropietario}}
+}
+
+script:post-response {
+  if (res.getStatus() === 200) {
+    // Una cuota PROPIA para el checkout: un propietario solo puede pagar las
+    // suyas, así que no sirve cualquiera de la lista global del admin.
+    const pend = res.body.cuotas.find(c => c.estado_actual !== 'pagado');
+    if (pend) bru.setEnvVar("cuotaPropiaId", pend.id);
+  }
+}
+
+docs {
+  Cuotas del propietario autenticado, con totales por estado y el adeudo.
+}

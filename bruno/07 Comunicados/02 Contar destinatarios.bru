@@ -1,0 +1,19 @@
+meta {
+  name: 02 Contar destinatarios
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/comunicados/destinatarios
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{tokenAdmin}}
+}
+
+docs {
+  Cuántos propietarios recibirían, desglosado por canal.
+}

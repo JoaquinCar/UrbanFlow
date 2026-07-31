@@ -1,0 +1,27 @@
+meta {
+  name: 08 Cambiar estado
+  type: http
+  seq: 8
+}
+
+put {
+  url: {{baseUrl}}/mantenimiento/{{ticketCreadoId}}/estado
+  body: json
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{tokenTecnico}}
+}
+
+body:json {
+  {
+    "estado": "resuelto"
+  }
+}
+
+docs {
+  El técnico solo puede mover los tickets que tiene asignados.
+  
+  Marcar como `resuelto` registra la fecha de resolución; reabrirlo la borra.
+}

@@ -1,0 +1,27 @@
+meta {
+  name: 08 Webhook de verificacion Meta
+  type: http
+  seq: 8
+}
+
+get {
+  url: {{baseUrl}}/comunicados/webhook?hub.mode=subscribe&hub.verify_token=CAMBIAR&hub.challenge=12345
+  body: none
+  auth: none
+}
+
+params:query {
+  hub.mode: subscribe
+  hub.verify_token: CAMBIAR
+  hub.challenge: 12345
+}
+
+docs {
+  **Lo llama Meta al dar de alta la suscripción**, no un usuario. No
+  lleva token.
+  
+  Se autentica comparando `hub.verify_token` con `META_VERIFY_TOKEN` del
+  servidor. Si coincide, devuelve el `hub.challenge` en texto plano.
+  
+  Cambia el valor de `hub.verify_token` por el de tu `.env` para probarlo.
+}

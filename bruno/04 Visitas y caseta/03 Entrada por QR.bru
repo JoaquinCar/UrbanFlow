@@ -1,0 +1,31 @@
+meta {
+  name: 03 Entrada por QR
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/visitas/qr
+  body: json
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{tokenVigilante}}
+}
+
+body:json {
+  {
+    "token": "{{qrToken}}"
+  }
+}
+
+docs {
+  Entrada de un residente escaneando su código.
+  
+  Además de verificar la firma, comprueba tres cosas: que el QR sea de este
+  fraccionamiento, que la cuenta esté activa, y que el token coincida con el
+  guardado en la base (es lo que permite revocarlo).
+  
+  Requiere `qrToken`: ejecuta antes «Código QR» en la carpeta 03.
+}

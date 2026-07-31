@@ -1,0 +1,25 @@
+meta {
+  name: 07 Actualizar lote
+  type: http
+  seq: 7
+}
+
+put {
+  url: {{baseUrl}}/fraccionamiento/lotes/{{loteCreadoId}}
+  body: json
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{tokenAdmin}}
+}
+
+body:json {
+  {
+    "precio": 1150000
+  }
+}
+
+docs {
+  Actualización parcial: los campos que no se envían conservan su valor.
+}

@@ -1,0 +1,26 @@
+meta {
+  name: 06 Bitacora
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{baseUrl}}/visitas/bitacora?limit=100
+  body: none
+  auth: none
+}
+
+params:query {
+  limit: 100
+}
+
+headers {
+  Authorization: Bearer {{tokenAdmin}}
+}
+
+docs {
+  Histórico de accesos. Sin filtro de fecha devuelve los **últimos 30
+  días**.
+  
+  Filtros: `desde`, `hasta` (AAAA-MM-DD), `tipo`, `lote_id`, `q`.
+}

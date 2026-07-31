@@ -1,0 +1,28 @@
+meta {
+  name: 09 Subir documento
+  type: http
+  seq: 9
+}
+
+post {
+  url: {{baseUrl}}/propietarios/{{propietarioId}}/documentos
+  body: multipartForm
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{tokenAdmin}}
+}
+
+body:multipart-form {
+  tipo: escritura
+  archivo: @file(ruta/al/archivo.pdf)
+}
+
+docs {
+  Subida multipart. El campo del archivo se llama `archivo`.
+  
+  Selecciona un archivo real desde Bruno antes de enviar.
+  
+  Tipos aceptados: PDF, JPG, PNG y WEBP. Máximo 5 MB.
+}

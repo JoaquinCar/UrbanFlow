@@ -1,0 +1,20 @@
+meta {
+  name: 10 Mapa de lotes
+  type: http
+  seq: 10
+}
+
+get {
+  url: {{baseUrl}}/fraccionamiento/mapa
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{tokenAdmin}}
+}
+
+docs {
+  Datos para pintar el plano: cada lote con su `svg_path_id` y su
+  estado, más un resumen con el conteo por estado.
+}

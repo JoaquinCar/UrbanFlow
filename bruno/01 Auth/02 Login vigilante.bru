@@ -1,0 +1,36 @@
+meta {
+  name: 02 Login vigilante
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/auth/login
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "email": "vigilante@urbanflow.test",
+    "password": "UrbanFlow2026!"
+  }
+}
+
+script:post-response {
+  if (res.getStatus() === 200) {
+    bru.setEnvVar("tokenVigilante", res.body.accessToken);
+    bru.setEnvVar("tokenVigilanteId", res.body.user.id);
+  }
+}
+
+docs {
+  Inicia sesión como vigilante y guarda el token en la variable
+  `tokenVigilante`, que usan el resto de peticiones de la colección.
+  
+  Devuelve además una cookie httpOnly `refreshToken` que Bruno conserva
+  automáticamente y que usa la petición de refrescar sesión.
+  
+  **Ejecuta los cuatro logins antes que nada.** El resto de carpetas los
+  necesitan.
+}

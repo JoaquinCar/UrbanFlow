@@ -1,0 +1,28 @@
+meta {
+  name: 03 Actualizar area
+  type: http
+  seq: 3
+}
+
+put {
+  url: {{baseUrl}}/reservaciones/areas/{{areaCreadaId}}
+  body: json
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{tokenAdmin}}
+}
+
+body:json {
+  {
+    "capacidad": 20,
+    "activa": false
+  }
+}
+
+docs {
+  Desactivar un área impide reservarla sin borrar su histórico.
+  
+  Es lo recomendado frente a eliminarla.
+}

@@ -1,0 +1,15 @@
+meta {
+  name: 03 Estado de cuenta de un propietario
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/pagos/cuotas/{{propietarioId}}
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{tokenAdmin}}
+}

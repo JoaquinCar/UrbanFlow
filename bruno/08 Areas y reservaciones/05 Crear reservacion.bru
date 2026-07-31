@@ -1,0 +1,38 @@
+meta {
+  name: 05 Crear reservacion
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/reservaciones
+  body: json
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{tokenPropietario}}
+}
+
+body:json {
+  {
+    "area_id": "{{areaId}}",
+    "fecha": "2026-08-15",
+    "hora_inicio": "16:00",
+    "hora_fin": "20:00"
+  }
+}
+
+script:post-response {
+  if (res.getStatus() === 201) bru.setEnvVar("reservacionId", res.body.id);
+}
+
+docs {
+  Nace en estado `pendiente`.
+  
+  El solapamiento lo impide una restricción de la base de datos, no solo una
+  comprobación previa: dos peticiones simultáneas del mismo horario no pueden
+  entrar las dos.
+  
+  Las franjas contiguas sí se permiten: 10:00–12:00 y 12:00–14:00 no chocan.
+}

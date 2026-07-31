@@ -1,0 +1,15 @@
+meta {
+  name: 07 Eliminar comunicado
+  type: http
+  seq: 7
+}
+
+delete {
+  url: {{baseUrl}}/comunicados/{{comunicadoId}}
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{tokenAdmin}}
+}

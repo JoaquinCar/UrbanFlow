@@ -1,0 +1,35 @@
+meta {
+  name: 12 Webhook MercadoPago
+  type: http
+  seq: 12
+}
+
+post {
+  url: {{baseUrl}}/pagos/webhook?type=payment&data.id=123456
+  body: json
+  auth: none
+}
+
+params:query {
+  type: payment
+  data.id: 123456
+}
+
+body:json {
+  {
+    "type": "payment",
+    "data": {
+      "id": "123456"
+    }
+  }
+}
+
+docs {
+  **Lo llama MercadoPago, no un usuario.** No lleva token.
+  
+  Se autentica con la firma HMAC de la cabecera `x-signature`, que se valida
+  antes de tocar la base de datos.
+  
+  Desde Bruno responderá 401 porque no se puede falsificar esa firma: es
+  exactamente el comportamiento correcto.
+}

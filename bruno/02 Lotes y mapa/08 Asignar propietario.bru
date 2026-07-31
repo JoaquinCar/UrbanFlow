@@ -1,0 +1,31 @@
+meta {
+  name: 08 Asignar propietario
+  type: http
+  seq: 8
+}
+
+put {
+  url: {{baseUrl}}/fraccionamiento/lotes/{{loteCreadoId}}/propietario
+  body: json
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{tokenAdmin}}
+}
+
+body:json {
+  {
+    "propietario_id": "{{propietarioId}}"
+  }
+}
+
+docs {
+  Asignar un propietario marca el lote como `vendido` en la misma
+  operación, porque el cron de cuotas cobra según `estado = 'vendido'`.
+  
+  Enviar `propietario_id: null` lo desasigna y lo devuelve a `disponible`.
+  
+  Requiere haber ejecutado antes «Listar propietarios» para tener
+  `propietarioId`.
+}

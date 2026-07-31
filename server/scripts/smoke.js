@@ -115,6 +115,78 @@ const SUITES = {
     check('change-password con nueva muy corta → 400', r8.status === 400, r8.data)
   },
 
+  // Entradas malformadas contra toda la API. Antes varias de estas devolvían
+  // 500 con el mensaje crudo de PostgreSQL ("invalid input syntax for type
+  // uuid"), que es un error del cliente presentado como fallo del servidor y
+  // además filtra detalles del motor.
+  errores: async (ctx) => {
+    const malformados = [
+      ['/fraccionamiento/lotes/abc', 'lote'],
+      ['/propietarios/123', 'propietario'],
+      ['/pagos/xyz/pdf', 'recibo'],
+      ['/visitas/no-uuid', 'visita'],
+      ['/mantenimiento/1', 'ticket'],
+      ['/reservaciones/nope', 'reservación'],
+    ]
+    for (const [ruta, que] of malformados) {
+      const r = await req('GET', ruta, { token: ctx.admin })
+      check(`identificador inválido de ${que} → 400, no 500`, r.status === 400, `${r.status} ${r.data?.error}`)
+    }
+
+    const r1 = await req('GET', '/fraccionamiento/lotes/abc', { token: ctx.admin })
+    check('el error no filtra el mensaje interno de PostgreSQL',
+      !/invalid input syntax|uuid|SELECT|FROM /i.test(r1.data.error ?? ''), r1.data?.error)
+    check('el error no incluye el stack en la respuesta', r1.data.stack === undefined, Object.keys(r1.data))
+
+    const r2 = await req('POST', '/fraccionamiento/lotes', {
+      token: ctx.admin,
+      body: undefined,
+      headers: { 'Content-Type': 'application/json' },
+    })
+    // Se manda un cuerpo roto a mano: JSON.stringify no puede producirlo.
+    const roto = await fetch(`${BASE}/fraccionamiento/lotes`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${ctx.admin}` },
+      body: '{"numero":',
+    })
+    const cuerpoRoto = await roto.json()
+    check('JSON mal formado → 400 en español',
+      roto.status === 400 && /JSON válido/.test(cuerpoRoto.error ?? ''), cuerpoRoto)
+
+    const r3 = await req('GET', '/visitas/bitacora?desde=ayer', { token: ctx.admin })
+    check('fecha no interpretable → 400 explicando el formato',
+      r3.status === 400 && /AAAA-MM-DD/.test(r3.data.error ?? ''), r3.data)
+
+    const r4 = await req('POST', '/fraccionamiento/lotes', {
+      token: ctx.admin, body: { numero: 'ZZ-QA', precio: 'mucho dinero' },
+    })
+    check('número no numérico → 400 sin culpar al campo equivocado',
+      r4.status === 400 && !/[Ee]stado/.test(r4.data.error ?? ''), r4.data)
+
+    const r5 = await req('POST', '/fraccionamiento/lotes', {
+      token: ctx.admin, body: { numero: 'X'.repeat(300) },
+    })
+    check('texto más largo que la columna → 400', r5.status === 400, r5.data)
+
+    // Inyección SQL: todas las consultas van parametrizadas, así que esto se
+    // trata como texto y simplemente no encuentra nada.
+    const r6 = await req('GET', "/fraccionamiento/lotes?q=' OR 1=1 --", { token: ctx.admin })
+    check('intento de inyección SQL se trata como texto literal',
+      r6.status === 200 && r6.data.total === 0, `${r6.status} total=${r6.data?.total}`)
+
+    const r7 = await req('GET', '/fraccionamiento/lotes', { token: 'esto-no-es-un-jwt' })
+    check('token con formato inválido → 401', r7.status === 401, r7.data)
+
+    const r8 = await req('GET', '/fraccionamiento/lotes', {
+      // JWT bien formado pero firmado con otra llave
+      token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIn0.firmafalsa',
+    })
+    check('token con firma falsa → 401', r8.status === 401, r8.data)
+
+    const r9 = await req('GET', '/ruta/que/no/existe', { token: ctx.admin })
+    check('ruta inexistente → 404 en JSON', r9.status === 404 && !!r9.data.error, r9.data)
+  },
+
   fraccionamiento: async (ctx) => {
     const r1 = await req('GET', '/fraccionamiento', { token: ctx.admin })
     check('GET /fraccionamiento devuelve el del token', r1.status === 200 && !!r1.data.nombre, r1.data)

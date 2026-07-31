@@ -1,0 +1,25 @@
+meta {
+  name: 13 Actualizar fraccionamiento
+  type: http
+  seq: 13
+}
+
+put {
+  url: {{baseUrl}}/fraccionamiento
+  body: json
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{tokenAdmin}}
+}
+
+body:json {
+  {
+    "direccion": "Av. Principal 100, Culiacán, Sinaloa"
+  }
+}
+
+docs {
+  Solo admin.
+}
