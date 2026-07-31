@@ -7,13 +7,15 @@ import Dashboard from '../screens/Dashboard';
 import Access from '../screens/Access';
 import Notifications from '../screens/Notifications';
 import Owners from '../screens/Owners';
-import Payments from '../screens/Payments';
 import Settings from '../screens/Settings';
 import NotFound from '../screens/NotFound';
 import Lotes from '../screens/admin/Lotes';
 import Mapa from '../screens/admin/Mapa';
 import Caseta from '../screens/caseta/Caseta';
 import Bitacora from '../screens/caseta/Bitacora';
+import Cuotas from '../screens/admin/Cuotas';
+import EstadoCuenta from '../screens/portal/EstadoCuenta';
+import PaymentResult from '../screens/PaymentResult';
 
 // Las rutas internas van en minúsculas. Las variantes en PascalCase que usaban
 // las pantallas viejas se redirigen para no romper enlaces existentes.
@@ -51,6 +53,7 @@ function AppRoutes() {
         <Route path="/owners" element={<Owners />} />
         <Route path="/lotes"  element={<Lotes />} />
         <Route path="/mapa"   element={<Mapa />} />
+        <Route path="/cuotas" element={<Cuotas />} />
       </Route>
 
       <Route element={<RequireAuth allow={['vigilante', 'admin']} />}>
@@ -59,8 +62,13 @@ function AppRoutes() {
       </Route>
 
       <Route element={<RequireAuth allow={['propietario']} />}>
-        <Route path="/payments" element={<Payments />} />
+        <Route path="/payments" element={<EstadoCuenta />} />
         <Route path="/access"   element={<Access />} />
+      </Route>
+
+      {/* Retorno de MercadoPago: /pagos/exito, /pagos/error, /pagos/pendiente */}
+      <Route element={<RequireAuth />}>
+        <Route path="/pagos/:estado" element={<PaymentResult />} />
       </Route>
 
       <Route path="*" element={<NotFound />} />

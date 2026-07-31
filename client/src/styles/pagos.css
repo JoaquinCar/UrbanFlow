@@ -1,0 +1,170 @@
+/* Cuotas, estado de cuenta y resultado de pago. */
+
+/* ── Tarjeta de saldo ──────────────────────────────────────────────── */
+.saldo-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 1.35rem 1.25rem;
+  border-radius: 16px;
+  margin-bottom: 1.5rem;
+  color: #ffffff;
+}
+
+.saldo-card--deuda  { background: #101483; }
+.saldo-card--al-dia { background: #16a34a; }
+
+.saldo-etiqueta {
+  font-size: 0.8rem;
+  opacity: 0.85;
+}
+
+.saldo-monto {
+  font-size: 2rem;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.saldo-vencido {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #fecaca;
+}
+
+/* ── Lista de cuotas ───────────────────────────────────────────────── */
+.cuota-lista {
+  list-style: none;
+  margin: 0 0 1.75rem;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.cuota-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.07);
+}
+
+.cuota-item--pagada { box-shadow: none; background: #f9fafb; }
+
+.cuota-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.3rem;
+  min-width: 0;
+}
+
+.cuota-concepto {
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+.cuota-periodo {
+  font-size: 0.76rem;
+  color: #6b7280;
+}
+
+.cuota-derecha {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.45rem;
+  flex-shrink: 0;
+}
+
+.cuota-monto {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #111827;
+  font-variant-numeric: tabular-nums;
+}
+
+.cuota-pagar,
+.cuota-recibo,
+.cuota-cobrar {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.5rem 0.85rem;
+  border-radius: 999px;
+  border: none;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.18s;
+}
+
+.cuota-pagar { background: #101483; color: #ffffff; }
+.cuota-pagar:hover:not(:disabled) { background: #1e1fa6; }
+.cuota-pagar:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.cuota-recibo {
+  background: #ffffff;
+  color: #374151;
+  border: 1px solid #d1d5db;
+}
+.cuota-recibo:hover { background: #f3f4f6; }
+
+.cuota-cobrar { padding: 0.4rem 0.7rem; font-size: 0.74rem; }
+
+/* ── Resumen de la vista admin ─────────────────────────────────────── */
+.resumen-cuotas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.25rem;
+  padding: 0 0 1rem;
+  font-size: 0.82rem;
+  color: #6b7280;
+}
+
+.resumen-cuotas strong {
+  color: #111827;
+  font-variant-numeric: tabular-nums;
+}
+
+.texto-peligro { color: #dc2626; }
+
+/* ── Resultado de pago ─────────────────────────────────────────────── */
+.resultado-pago {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 3rem 1.75rem;
+  text-align: center;
+}
+
+.resultado--exito     { color: #16a34a; }
+.resultado--error     { color: #dc2626; }
+.resultado--pendiente { color: #b45309; }
+
+.resultado-titulo {
+  margin: 0.5rem 0 0;
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: #111827;
+}
+
+.resultado-mensaje {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #6b7280;
+  line-height: 1.5;
+  max-width: 420px;
+}
+
+.resultado-accion {
+  width: 100%;
+  max-width: 300px;
+  margin-top: 1.25rem;
+}
