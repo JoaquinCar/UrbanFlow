@@ -49,8 +49,12 @@ node client/scripts/e2e/verificar-caseta.mjs    # terminal 3
 | `verificar-reservas.mjs` | Calendario, franjas ocupadas, gestión de áreas |
 | `verificar-portal.mjs` | Portal del propietario y su código QR |
 | `verificar-dashboard.mjs` | Métricas del panel y sus permisos |
+| `verificar-socket.mjs` | **Seguridad:** que Socket.io exija token y aísle las salas por fraccionamiento |
 
 Cada script deja una captura `.png` en el directorio desde el que se ejecuta.
+
+`verificar-socket.mjs` es la excepción: no abre navegador, usa
+`socket.io-client` directamente, así que no necesita `puppeteer-core`.
 
 > Los scripts asumen la base recién sembrada. Si has estado usando la
 > aplicación, vuelve a ejecutar `npm run seed` antes.
