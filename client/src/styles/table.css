@@ -103,3 +103,71 @@
     text-align: left;
   }
 }
+
+/* Documentos adjuntos del propietario */
+.doc-subir {
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+  margin-bottom: 0.35rem;
+}
+
+.doc-subir .page-select { flex: 1; }
+
+.doc-subir-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.doc-lista {
+  list-style: none;
+  margin: 1rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.doc-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.7rem 0.85rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+}
+
+.doc-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.doc-nombre {
+  font-size: 0.86rem;
+  font-weight: 500;
+  color: #111827;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.doc-meta {
+  font-size: 0.74rem;
+  color: #9ca3af;
+}
+
+/* Imagen del código QR dentro del modal */
+.qr-imagen {
+  display: block;
+  width: 220px;
+  height: 220px;
+  margin: 0 auto 0.75rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+}
