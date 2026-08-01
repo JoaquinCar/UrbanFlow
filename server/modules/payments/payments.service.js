@@ -1,7 +1,7 @@
 const pool = require('../../shared/db/pool')
 const { httpError } = require('../../shared/utils/errors')
 const { generarCuotasMensuales } = require('../../shared/jobs/cuota-cron')
-const mp = require('./payments.mercadopago')
+const mp = require('./payments.vexorpay')
 
 const METODOS_MANUALES = ['efectivo', 'transferencia']
 
@@ -299,24 +299,24 @@ async function registrarPagoManual(fraccionamientoId, datos) {
   }
 }
 
-// Webhook de MercadoPago.
+// Webhook de Stripe (validación directa con la API de Stripe).
 async function procesarWebhook(req) {
-  // La firma se valida ANTES de tocar la base: si no cuadra, no se hace nada.
-  const paymentId = mp.validarFirma(req)
+  const event = mp.validarWebhookStripe(req)
 
-  const tipo = req.query.type || req.body?.type
-  if (tipo !== 'payment') return { ignorado: true, motivo: `tipo ${tipo}` }
-  if (!paymentId) return { ignorado: true, motivo: 'sin data.id' }
-
-  // El estado autoritativo se lee de la API. El cuerpo de la notificación solo
-  // dice "algo pasó con el pago X" y no está firmado campo por campo.
-  const pagoMp = await mp.obtenerPago(paymentId)
-  if (pagoMp.status !== 'approved') {
-    return { ignorado: true, motivo: `estado ${pagoMp.status}` }
+  // Solo nos interesan los pagos completados
+  if (event.type !== 'checkout.session.completed' && event.type !== 'payment_intent.payment_succeeded') {
+    return { ignorado: true, motivo: `tipo ${event.type}` }
   }
 
-  const cuotaId = pagoMp.external_reference
-  if (!cuotaId) return { ignorado: true, motivo: 'sin external_reference' }
+  const session = event.data.object
+
+  // El cuota_id viene en client_reference_id (lo pasamos al crear la sesión)
+  const cuotaId = session.client_reference_id
+    || session.metadata?.cuota_id
+  if (!cuotaId) return { ignorado: true, motivo: 'sin client_reference_id' }
+
+  const paymentId = session.payment_intent || session.id
+  const montoPagado = session.amount_total || session.amount || 0
 
   const client = await pool.connect()
   try {
@@ -328,16 +328,12 @@ async function procesarWebhook(req) {
       return { ignorado: true, motivo: 'cuota inexistente' }
     }
 
-    // ON CONFLICT DO NOTHING sobre el índice único de la migración 011: hace el
-    // webhook idempotente frente a los reintentos de MercadoPago. El índice
-    // está acotado a metodo='online' para no chocar con los folios de caja de
-    // los cobros manuales, que sí se repiten legítimamente.
     const { rowCount } = await client.query(
       `INSERT INTO pagos (cuota_id, monto_pagado, metodo, referencia_mp)
        VALUES ($1, $2, 'online', $3)
        ON CONFLICT (referencia_mp) WHERE referencia_mp IS NOT NULL AND metodo = 'online'
        DO NOTHING`,
-      [cuotaId, pagoMp.transaction_amount, String(paymentId)]
+      [cuotaId, montoPagado / 100, String(paymentId)]
     )
 
     await client.query(`UPDATE cuotas SET estado = 'pagado' WHERE id = $1`, [cuotaId])

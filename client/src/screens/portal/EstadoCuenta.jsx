@@ -24,7 +24,7 @@ function EstadoCuenta() {
     try {
       const pref = await crearCheckout(cuota.id);
       // En sandbox MercadoPago devuelve una URL distinta a la de producción.
-      const destino = pref.init_point || pref.sandbox_init_point;
+      const destino = pref.sandbox_init_point || pref.init_point;
       if (!destino) throw new Error('MercadoPago no devolvió una URL de pago');
       window.location.href = destino;
     } catch (err) {
