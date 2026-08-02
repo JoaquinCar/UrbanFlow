@@ -6,10 +6,10 @@ import MyButton from '../Components/MyButton';
 import './main.css';
 import '../styles/pagos.css';
 
-// Pantalla de retorno de MercadoPago. Corresponde a MP_BACK_URL_SUCCESS,
-// _FAILURE y _PENDING.
+// Pantalla de retorno de Stripe (vía Vexor). Corresponde a
+// STRIPE_BACK_URL_SUCCESS, _FAILURE y _PENDING.
 //
-// Importante: esta pantalla NO confirma nada. El pago se da por bueno cuando
+// Esta pantalla NO confirma nada. El pago se da por bueno cuando
 // llega el webhook firmado, no cuando el navegador vuelve — la URL de retorno
 // la puede abrir cualquiera escribiéndola a mano. Aquí solo se informa y se
 // remite al estado de cuenta, que sí lee la base.
@@ -18,7 +18,7 @@ const RESULTADOS = {
     icono: HiCheckCircle,
     clase: 'resultado--exito',
     titulo: 'Pago recibido',
-    mensaje: 'Gracias. En cuanto MercadoPago confirme la operación verás la cuota como pagada en tu estado de cuenta.',
+    mensaje: 'Gracias. En cuanto Stripe confirme la operación verás la cuota como pagada en tu estado de cuenta.',
   },
   error: {
     icono: HiXCircle,
@@ -30,7 +30,7 @@ const RESULTADOS = {
     icono: HiClock,
     clase: 'resultado--pendiente',
     titulo: 'Pago pendiente',
-    mensaje: 'MercadoPago está procesando la operación. La cuota se actualizará automáticamente al confirmarse.',
+    mensaje: 'Stripe está procesando la operación. La cuota se actualizará automáticamente al confirmarse.',
   },
 };
 
@@ -51,8 +51,8 @@ function PaymentResult() {
         <h1 className="resultado-titulo">{info.titulo}</h1>
         <p className="resultado-mensaje">{info.mensaje}</p>
 
-        {params.get('payment_id') && (
-          <p className="campo-ayuda">Referencia: {params.get('payment_id')}</p>
+        {params.get('payment_intent') && (
+          <p className="campo-ayuda">Referencia: {params.get('payment_intent')}</p>
         )}
 
         <div className="resultado-accion">
