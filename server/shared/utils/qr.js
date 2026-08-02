@@ -49,4 +49,36 @@ async function qrPngBuffer(token) {
   return QRCode.toBuffer(token, { type: 'png', errorCorrectionLevel: 'M', margin: 1, width: 512 })
 }
 
-module.exports = { generarQrToken, verificarQrToken, qrDataUrl, qrPngBuffer }
+// Pase de visitante: mismo secreto y esquema sin 'exp' propio que el QR de
+// residente, pero con otro 'type'. La vigencia y el uso único los controla la
+// fila en pases_visitante, no el JWT — así, cancelar un pase (adelantando su
+// expira_at) lo invalida al instante sin depender de que el token expire.
+function generarPaseToken(paseId, fraccionamientoId) {
+  return jwt.sign({ paseId, fraccionamientoId, type: 'visitor-pass' }, secretoQr())
+}
+
+function verificarPaseToken(token) {
+  let payload
+  try {
+    payload = jwt.verify(token, secretoQr())
+  } catch {
+    throw httpError(401, 'Código inválido o expirado')
+  }
+  if (payload.type !== 'visitor-pass') throw httpError(401, 'Código inválido')
+  return payload
+}
+
+// La caseta escanea con un solo lector tanto el QR de residente como el pase
+// de visitante: antes de validar cada uno hay que ver a cuál tipo pertenece.
+function tipoDeToken(token) {
+  try {
+    return jwt.verify(token, secretoQr()).type
+  } catch {
+    throw httpError(401, 'Código QR inválido o expirado')
+  }
+}
+
+module.exports = {
+  generarQrToken, verificarQrToken, qrDataUrl, qrPngBuffer,
+  generarPaseToken, verificarPaseToken, tipoDeToken,
+}

@@ -87,7 +87,8 @@ function Caseta() {
     try {
       const resultado = await entradaPorQr(token);
       setUltimoQr({ ok: true, ...resultado });
-      toast.exito(`Acceso autorizado: ${resultado.residente.nombre}`);
+      const persona = resultado.residente ?? resultado.invitado;
+      toast.exito(`Acceso autorizado: ${persona.nombre}`);
       recargar();
     } catch (err) {
       const mensaje = mensajeDeError(err);
@@ -217,8 +218,8 @@ function Caseta() {
         {ultimoQr?.ok && (
           <div className="qr-resultado qr-resultado--ok">
             <p className="qr-resultado-titulo">Acceso autorizado</p>
-            <p className="qr-resultado-nombre">{ultimoQr.residente.nombre}</p>
-            <p className="qr-resultado-lote">Lote {ultimoQr.residente.lote.numero}</p>
+            <p className="qr-resultado-nombre">{(ultimoQr.residente ?? ultimoQr.invitado).nombre}</p>
+            <p className="qr-resultado-lote">Lote {(ultimoQr.residente ?? ultimoQr.invitado).lote.numero}</p>
             <MyButton onClick={() => setUltimoQr(null)}>Escanear otro</MyButton>
           </div>
         )}

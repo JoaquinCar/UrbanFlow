@@ -1,7 +1,8 @@
 const pool = require('../../shared/db/pool')
 const { httpError } = require('../../shared/utils/errors')
-const { verificarQrToken } = require('../../shared/utils/qr')
+const { verificarQrToken, verificarPaseToken, tipoDeToken } = require('../../shared/utils/qr')
 const { aCsv } = require('../../shared/utils/csv')
+const pases = require('../passes/passes.service')
 
 const TIPOS = ['visita', 'delivery', 'servicio', 'residente']
 
@@ -59,9 +60,20 @@ async function registrarEntrada(fraccionamientoId, vigilanteId, datos) {
   return obtenerConDetalle(rows[0].id, fraccionamientoId)
 }
 
-// Entrada de un residente escaneando su QR en la caseta.
+// Entrada por QR en la caseta. El mismo escáner sirve tanto para el QR fijo
+// del residente como para un pase temporal de visitante: hay que ver el
+// 'type' del payload antes de saber cuál de los dos flujos validar.
 async function entradaPorQr(fraccionamientoId, vigilanteId, token) {
   if (!token) throw httpError(400, 'El token del QR es requerido')
+
+  if (tipoDeToken(token) === 'visitor-pass') {
+    const { paseId, fraccionamientoId: paseFraccId } = verificarPaseToken(token)
+    if (paseFraccId !== fraccionamientoId) {
+      throw httpError(403, 'El código QR pertenece a otro fraccionamiento')
+    }
+    const { visitaId, invitado } = await pases.consumir(fraccionamientoId, vigilanteId, paseId)
+    return { visita: await obtenerConDetalle(visitaId, fraccionamientoId), invitado }
+  }
 
   const payload = verificarQrToken(token)
 
