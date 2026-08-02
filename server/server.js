@@ -4,6 +4,8 @@ const cors = require('cors')
 const cookieParser = require('cookie-parser')
 const http = require('http')
 const { Server } = require('socket.io')
+const swaggerUi = require('swagger-ui-express')
+const swaggerSpec = require('./swagger')
 
 const app = express()
 const httpServer = http.createServer(app)
@@ -41,6 +43,13 @@ app.use('/api/pagos', paymentsRoutes)
 app.use('/api/mantenimiento', maintenanceRoutes)
 app.use('/api/comunicados', commsRoutes)
 app.use('/api/reservaciones', reservationsRoutes)
+
+// Swagger docs
+app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+  customCss: '.swagger-ui .topbar { display: none }',
+  customSiteTitle: 'UrbanFlow API Docs',
+}))
+app.get('/api/docs.json', (req, res) => res.json(swaggerSpec))
 
 // Socket.io
 //
