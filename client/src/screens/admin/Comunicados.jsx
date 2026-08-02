@@ -93,7 +93,7 @@ function Comunicados() {
 
       <div className="page-actions">
         <button className="access-btn-dark" onClick={() => setModal(true)}>
-          <HiPlus size={16} /> Nuevo comunicado
+          <HiPlus size={16} /> Nuevo
         </button>
         {destinatarios && (
           <span className="campo-ayuda">

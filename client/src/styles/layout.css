@@ -65,7 +65,7 @@
   flex-wrap: wrap;
   gap: 0.6rem;
   align-items: center;
-  padding: 0 1.25rem 1rem;
+  padding: 0 1rem 1rem;
 }
 
 .page-actions .page-search {
@@ -93,6 +93,8 @@
   background: #f9fafb;
   color: #111827;
   cursor: pointer;
+  width: 100%;
+  margin-bottom: 0.5rem;
 }
 
 @media (min-width: 768px) {

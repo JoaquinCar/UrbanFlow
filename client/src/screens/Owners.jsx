@@ -2,7 +2,7 @@ import React, { useState, useCallback } from 'react';
 import { HiPlus, HiEye, HiTrash } from 'react-icons/hi2';
 import { Header } from '../Components/Header';
 import { Modal } from '../Components/Modal';
-import { DataTable } from '../Components/DataTable';
+import { Spinner } from '../Components/Spinner';
 import { ConfirmModal } from '../Components/ConfirmModal';
 import MyButton from '../Components/MyButton';
 import { PropietarioDetalle } from './admin/PropietarioDetalle';
@@ -13,6 +13,7 @@ import { listarPropietarios, crearPropietario, eliminarPropietario } from '../ap
 import './main.css';
 import '../styles/layout.css';
 import '../styles/table.css';
+import '../styles/caseta.css';
 
 // El mapa de Leaflet que había aquí se eliminó: mostraba marcadores inventados
 // sobre Mérida, y ni propietarios ni lotes tienen coordenadas en la base, así
@@ -83,37 +84,6 @@ function Owners() {
     }
   };
 
-  const columnas = [
-    { key: 'nombre_completo', label: 'Nombre' },
-    { key: 'email', label: 'Correo' },
-    { key: 'telefono', label: 'Teléfono', render: p => p.telefono || '—' },
-    {
-      key: 'lotes',
-      label: 'Lotes',
-      render: p => (p.lotes?.length
-        ? p.lotes.map(l => l.numero).join(', ')
-        : <span className="badge badge--gris">Sin lote</span>),
-    },
-    {
-      key: 'acciones',
-      label: 'Acciones',
-      render: p => (
-        <span className="tabla-acciones">
-          <button className="icon-btn" onClick={() => setDetalleId(p.id)} aria-label={`Ver ${p.nombre_completo}`}>
-            <HiEye size={18} />
-          </button>
-          <button
-            className="icon-btn icon-btn--peligro"
-            onClick={() => setPorEliminar(p)}
-            aria-label={`Eliminar ${p.nombre_completo}`}
-          >
-            <HiTrash size={18} />
-          </button>
-        </span>
-      ),
-    },
-  ];
-
   return (
     <div className="dashboard-page">
       <Header />
@@ -131,18 +101,49 @@ function Owners() {
           onChange={e => setQ(e.target.value)}
         />
         <button className="access-btn-dark" onClick={abrirNuevo}>
-          <HiPlus size={16} /> Nuevo propietario
+          <HiPlus size={16} /> Nuevo
         </button>
       </div>
 
       <div className="page-body">
-        <DataTable
-          columnas={columnas}
-          filas={datos?.items}
-          cargando={cargando}
-          error={error}
-          vacio="No hay propietarios registrados"
-        />
+        {cargando && <Spinner />}
+        {error && <p className="table-error">{error}</p>}
+        {datos && datos.items.length === 0 && (
+          <p className="access-empty">No hay propietarios registrados</p>
+        )}
+
+        {datos && datos.items.length > 0 && (
+          <ul className="caseta-lista">
+            {datos.items.map(p => (
+              <li key={p.id} className="caseta-item">
+                <div className="caseta-item-info">
+                  <span className="caseta-item-nombre">{p.nombre_completo}</span>
+                  <span className="caseta-item-meta">
+                    {p.email}
+                    {p.telefono && ` · ${p.telefono}`}
+                  </span>
+                  <span className="caseta-item-tiempo">
+                    {p.lotes?.length
+                      ? `Lotes: ${p.lotes.map(l => l.numero).join(', ')}`
+                      : 'Sin lote'}
+                  </span>
+                </div>
+                <span className="tabla-acciones">
+                  <button className="icon-btn" onClick={() => setDetalleId(p.id)} aria-label={`Ver ${p.nombre_completo}`}>
+                    <HiEye size={18} />
+                  </button>
+                  <button
+                    className="icon-btn icon-btn--peligro"
+                    onClick={() => setPorEliminar(p)}
+                    aria-label={`Eliminar ${p.nombre_completo}`}
+                  >
+                    <HiTrash size={18} />
+                  </button>
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
 
       <Modal isOpen={modalNuevo} onClose={() => setModalNuevo(false)} title="Nuevo propietario">

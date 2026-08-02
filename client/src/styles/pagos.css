@@ -134,6 +134,31 @@
 
 .texto-peligro { color: #dc2626; }
 
+/* ── Grillas de las pestañas de Cuotas ─────────────────────────────── */
+/* Cuotas: 2 columnas en móvil, 3 en escritorio.
+   Vencidos y Pagos (con --simple): 1 columna en móvil, 3 en escritorio. */
+.cuotas-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.6rem;
+}
+
+.cuotas-grid--simple {
+  grid-template-columns: 1fr;
+}
+
+.cuotas-grid .caseta-item {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+@media (min-width: 768px) {
+  .cuotas-grid,
+  .cuotas-grid--simple {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
 /* ── Resultado de pago ─────────────────────────────────────────────── */
 .resultado-pago {
   display: flex;

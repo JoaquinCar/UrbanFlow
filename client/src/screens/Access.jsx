@@ -64,7 +64,7 @@ function HistorialVisitas() {
   }
 
   return (
-    <div>
+    <div className="historial-lista">
       {datos.map(v => (
         <div key={v.id} className="access-card">
           <div className="access-card-header">
