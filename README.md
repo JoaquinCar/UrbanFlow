@@ -22,6 +22,7 @@ Sistema web para la gestión integral de fraccionamientos residenciales cerrados
 | 8 | Reserva de áreas comunes | Miroslava Moheno | ✅ |
 | 9 | Portal del Propietario | Jorge Ruiz | ✅ |
 | 10 | Dashboard Admin + métricas | Todos | ✅ |
+| 11 | API Docs (Swagger/OpenAPI) | Jorge Ruiz | ✅ |
 
 ---
 
@@ -182,6 +183,22 @@ Para el recorrido manual por rol, ver [docs/pruebas-e2e.md](docs/pruebas-e2e.md)
 Todas las rutas cuelgan de `/api`. Salvo las indicadas, requieren
 `Authorization: Bearer <accessToken>`.
 
+### Documentación interactiva (Swagger/OpenAPI)
+
+La API incluye documentación interactiva generada con **Swagger UI**:
+
+| Recurso | URL |
+|---|---|
+| UI interactiva | `http://localhost:3000/api/docs` |
+| Spec JSON | `http://localhost:3000/api/docs.json` |
+
+**79 endpoints documentados** en 8 módulos: Auth, Pagos, Propietarios, Visitas,
+Mantenimiento, Comunicados, Reservaciones y Fraccionamiento.
+
+Para agregar o modificar documentación, edita los bloques `@swagger` en cada
+archivo `*.routes.js` dentro de `server/modules/`. La configuración base de
+OpenAPI (schemas compartidos, servers, security) está en `server/swagger.js`.
+
 ### Autenticación — `/api/auth`
 
 | Método | Ruta | Auth | Descripción |
@@ -288,6 +305,7 @@ responden con un error explícito en lugar de simular éxito.
 | MercadoPago | `MP_ACCESS_TOKEN`, `MP_WEBHOOK_SECRET` | El checkout responde `500` diciendo qué falta |
 | Correo | `SMTP_HOST`, `SMTP_USER`, `SMTP_PASS` | El comunicado se guarda; el resultado marca el canal como fallido |
 | WhatsApp | `META_PHONE_NUMBER_ID`, `META_ACCESS_TOKEN` | Igual que el correo |
+| Swagger UI | — | Siempre disponible en `/api/docs` |
 
 **Los webhooks necesitan una URL pública.** En local: `ngrok http 3000` y
 `PUBLIC_URL` con la URL que devuelva.
@@ -312,6 +330,8 @@ responden con un error explícito en lugar de simular éxito.
 
 | Documento | Contenido |
 |---|---|
+| `/api/docs` | Swagger UI — documentación interactiva de la API |
+| `/api/docs.json` | Spec OpenAPI 3.0 en JSON |
 | [docs/db-schema.md](docs/db-schema.md) | Esquema implementado y las restricciones que impiden datos incoherentes |
 | [docs/decisiones.md](docs/decisiones.md) | Decisiones de arquitectura y por qué se tomaron |
 | [docs/pruebas-e2e.md](docs/pruebas-e2e.md) | Guion de prueba manual por rol |
