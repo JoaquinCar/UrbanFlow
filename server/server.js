@@ -19,8 +19,12 @@ app.set('trust proxy', 1)
 
 // Middleware
 app.use(cors({ origin: process.env.CLIENT_URL || 'http://localhost:5173', credentials: true }))
-app.use(express.json())
 app.use(cookieParser())
+
+// Stripe necesita el body RAW (buffer) para validar la firma del webhook.
+// Se aplica ANTES de express.json() y solo a la ruta del webhook.
+app.use('/api/pagos/webhook', express.raw({ type: 'application/json' }))
+app.use(express.json())
 
 // Health check
 app.get('/api/health', (req, res) => res.json({ status: 'ok', env: process.env.NODE_ENV }))
@@ -89,6 +93,17 @@ app.set('io', io)
 // Cron jobs
 const { iniciarCronCuotas } = require('./shared/jobs/cuota-cron')
 iniciarCronCuotas()
+
+// Redirección de regreso de MercadoPago: las back_urls apuntan al backend
+// (HTTPS de ngrok, que MP valida), y estas rutas redirigen al navegador al
+// frontend React donde vive la pantalla PaymentResult.
+const redirFrontend = (req, res) => {
+  const frontendBase = process.env.CLIENT_URL || 'http://localhost:5173'
+  res.redirect(`${frontendBase}${req.originalUrl}`)
+}
+app.get('/pagos/exito', redirFrontend)
+app.get('/pagos/error', redirFrontend)
+app.get('/pagos/pendiente', redirFrontend)
 
 // 404 — cualquier ruta /api no reconocida. Va antes del errorHandler para que
 // el cliente reciba JSON y no el HTML por defecto de Express.
