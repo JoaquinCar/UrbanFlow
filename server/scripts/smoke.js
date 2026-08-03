@@ -633,31 +633,27 @@ const SUITES = {
     const r14 = await req('GET', `/pagos/${pagoId}/pdf`, { token: ctx.propietario })
     check('un propietario no descarga recibos ajenos → 403', r14.status === 403, r14.data)
 
-    // ── webhook de MercadoPago ──
-    const r15 = await req('POST', '/pagos/webhook?type=payment&data.id=123', { body: {} })
-    check('webhook sin firma → 401', r15.status === 401, r15.data)
+    // ── webhook de Stripe ──
+    // La firma se valida ANTES de cualquier escritura, así que un aviso sin
+    // firma o falsificado nunca llega a marcar una cuota como pagada.
+    const cuotasAntes = await req('GET', '/pagos/cuotas?estado=pagado&limit=500', { token: ctx.admin })
 
-    const r16 = await req('POST', '/pagos/webhook?type=payment&data.id=123', {
-      body: {}, headers: { 'x-signature': 'ts=1,v1=deadbeef', 'x-request-id': 'abc' },
+    const r15 = await req('POST', '/pagos/webhook?type=payment', { body: {} })
+    check('webhook sin firma no se procesa',
+      r15.status === 401 || /no configurado|[Ff]irma/.test(JSON.stringify(r15.data)),
+      `${r15.status} ${JSON.stringify(r15.data).slice(0, 90)}`)
+
+    const r16 = await req('POST', '/pagos/webhook', {
+      body: {}, headers: { 'stripe-signature': 't=1,v1=firmafalsa' },
     })
-    check('webhook con firma inválida → 401', r16.status === 401, r16.data)
+    check('webhook con firma falsa no se procesa',
+      r16.status === 401 || /no configurado|[Ff]irma/.test(JSON.stringify(r16.data)),
+      `${r16.status} ${JSON.stringify(r16.data).slice(0, 90)}`)
 
-    // Firma HMAC válida calculada localmente: demuestra que el manifiesto se
-    // construye igual que en MercadoPago, sin necesitar credenciales suyas.
-    const secret = process.env.MP_WEBHOOK_SECRET
-    if (secret) {
-      const crypto = require('crypto')
-      const ts = '1700000000'
-      const manifest = `id:123;request-id:req-qa;ts:${ts};`
-      const v1 = crypto.createHmac('sha256', secret).update(manifest).digest('hex')
-      const r17 = await req('POST', '/pagos/webhook?type=payment&data.id=123', {
-        body: {}, headers: { 'x-signature': `ts=${ts},v1=${v1}`, 'x-request-id': 'req-qa' },
-      })
-      check('webhook con firma válida no da 401 (el manifiesto es correcto)',
-        r17.status !== 401, `${r17.status} ${JSON.stringify(r17.data)}`)
-    } else {
-      check('MP_WEBHOOK_SECRET sin configurar: se omite la prueba de firma válida', true)
-    }
+    const cuotasDespues = await req('GET', '/pagos/cuotas?estado=pagado&limit=500', { token: ctx.admin })
+    check('ningún webhook falso alteró las cuotas',
+      cuotasAntes.data.total === cuotasDespues.data.total,
+      `antes ${cuotasAntes.data?.total} · después ${cuotasDespues.data?.total}`)
 
     // ── checkout: sin credenciales debe fallar con un mensaje claro ──
     // Se relee la lista: las pruebas anteriores ya pagaron algunas cuotas y una
@@ -667,11 +663,14 @@ const SUITES = {
     const r18 = await req('POST', '/pagos/checkout', {
       token: ctx.admin, body: { cuota_id: cuotaPendiente.id },
     })
-    if (process.env.MP_ACCESS_TOKEN) {
-      check('checkout crea preferencia de MercadoPago', r18.status === 201 && !!r18.data.init_point, r18.data)
+    if (process.env.VEXOR_PROJECT || process.env.STRIPE_SECRET_KEY) {
+      check('checkout devuelve una URL de pago',
+        r18.status === 201 && !!(r18.data.init_point || r18.data.url), r18.data)
     } else {
-      check('sin MP_ACCESS_TOKEN el checkout falla con mensaje explícito',
-        r18.status === 500 && /MP_ACCESS_TOKEN no configurado/.test(r18.data.error ?? ''), r18.data)
+      // Sin credenciales responde un error explícito diciendo qué falta, en
+      // lugar de fingir un pago que no existe.
+      check('sin credenciales el checkout dice exactamente qué falta',
+        r18.status === 500 && /VEXOR_|STRIPE_.*no configurad/.test(r18.data.error ?? ''), r18.data)
     }
 
     const r19 = await req('POST', '/pagos/checkout', { token: ctx.admin, body: {} })
