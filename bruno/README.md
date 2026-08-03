@@ -65,8 +65,12 @@ exista alguno subido antes.
 
 ## Para apuntar al servidor desplegado
 
-Edita `environments/Produccion.bru` con el dominio real y cambia el entorno en
-Bruno. Nada más: todas las peticiones usan `{{baseUrl}}`.
+Cambia el entorno a **Produccion** en el selector de Bruno. Nada más: ya apunta
+a `https://urbanflowfullstack.duckdns.org/api` y todas las peticiones usan
+`{{baseUrl}}`.
+
+Los tokens de cada entorno se guardan por separado, así que hay que volver a
+correr los logins de la carpeta `01-Auth` después de cambiar.
 
 ## Si algo deja de funcionar
 
