@@ -22,7 +22,10 @@ export function SocketProvider({ children }) {
     const token = getAccessToken()
     if (!token) return
 
-    const socket = io(import.meta.env.VITE_SOCKET_URL || 'http://localhost:3000', {
+    // Sin VITE_SOCKET_URL, socket.io se conecta al mismo origen de la página,
+    // que es lo correcto detrás de nginx. En desarrollo la define client/.env
+    // porque el cliente y la API están en puertos distintos.
+    const socket = io(import.meta.env.VITE_SOCKET_URL || undefined, {
       auth: { token },
       transports: ['websocket'],
     })

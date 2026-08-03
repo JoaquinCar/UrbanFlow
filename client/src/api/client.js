@@ -1,8 +1,15 @@
 import axios from 'axios'
 import { getAccessToken, setAccessToken, clearAccessToken } from './token'
 
+// Sin VITE_API_URL se usa una ruta relativa, es decir, el mismo origen que
+// sirvió la página. Es lo correcto en producción, donde nginx entrega el
+// cliente y la API bajo el mismo dominio, y además sigue funcionando al
+// cambiar de IP a dominio o de HTTP a HTTPS sin reconstruir nada.
+//
+// En desarrollo el cliente vive en :5173 y la API en :3000, así que ahí sí
+// hace falta la variable: la define client/.env.
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3000/api',
+  baseURL: import.meta.env.VITE_API_URL || '/api',
   withCredentials: true, // manda la cookie httpOnly refreshToken
 })
 
