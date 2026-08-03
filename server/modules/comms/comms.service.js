@@ -138,7 +138,10 @@ async function crear(fraccionamientoId, autorId, datos) {
   if (canalesFinal.whatsapp) {
     const numeros = destinatarios.map(d => d.whatsapp).filter(Boolean)
     try {
-      resultado.whatsapp = await whatsapp.enviarBatch(numeros, `${titulo.trim()}\n\n${cuerpo.trim()}`)
+      // Los parámetros de plantilla de Meta no admiten saltos de línea: se
+      // colapsan a espacio, si no Meta rechaza el envío con el error 132018.
+      const textoWhatsapp = `${titulo.trim()}: ${cuerpo.trim()}`.replace(/\s*\n+\s*/g, ' ')
+      resultado.whatsapp = await whatsapp.enviarBatch(numeros, textoWhatsapp)
     } catch (err) {
       resultado.whatsapp = {
         intentados: numeros.length, enviados: 0, fallidos: numeros.length,

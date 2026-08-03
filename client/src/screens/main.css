@@ -53,6 +53,29 @@
   margin: 0 auto;
 }
 
+/* En escritorio sobra ancho para desperdiciarlo en una sola columna de
+   450px: el portal pasa a dos columnas (tres en pantallas muy anchas) y las
+   tarjetas de identidad/saldo y accesos rápidos ocupan todo el ancho. */
+@media (min-width: 768px) {
+  .dashboard-content {
+    max-width: 100%;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    align-items: start;
+    gap: 1.25rem;
+  }
+
+  .dashboard-content > .user-card,
+  .dashboard-content > .payments-card,
+  .dashboard-content > .portal-seccion-ancha {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (min-width: 1100px) {
+  .dashboard-content { grid-template-columns: repeat(3, 1fr); }
+}
+
 /* ──────────────────────────────────────
    User card
 ────────────────────────────────────── */
@@ -178,11 +201,12 @@
    Section titles
 ────────────────────────────────────── */
 .section-title {
-  font-size: 1rem;
+  font-size: 1.5rem;
   font-weight: 700;
   color: #111827;
-  margin: 0 0 0.75rem 0;
+  margin: 1.25rem;
   text-align: center;
+  text-align: left;
 }
 
 /* ──────────────────────────────────────
@@ -192,6 +216,10 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 0.75rem;
+}
+
+@media (min-width: 768px) {
+  .quick-actions-grid { grid-template-columns: repeat(4, 1fr); }
 }
 
 .action-card {
@@ -469,6 +497,19 @@
 /* ──────────────────────────────────────
    Access card
 ────────────────────────────────────── */
+.historial-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+@media (min-width: 768px) {
+  .historial-lista {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
 .access-card {
   background: #ffffff;
   border-radius: 16px;
@@ -568,6 +609,10 @@
   color: #374151;
   cursor: pointer;
   transition: background 0.18s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
 }
 
 .access-btn-outline:hover {
@@ -576,6 +621,10 @@
 
 .access-btn-dark {
   flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
   padding: 0.6rem 0;
   border: none;
   border-radius: 999px;

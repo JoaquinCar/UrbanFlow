@@ -3,7 +3,7 @@ import { HiPlus, HiArrowPath, HiBanknotes, HiArrowDownTray } from 'react-icons/h
 import { Header } from '../../Components/Header';
 import { Modal } from '../../Components/Modal';
 import { Tabs } from '../../Components/Tabs';
-import { DataTable } from '../../Components/DataTable';
+import { Spinner } from '../../Components/Spinner';
 import MyButton from '../../Components/MyButton';
 import { useFetch } from '../../hooks/useFetch';
 import { useToast } from '../../context/ToastContext';
@@ -19,6 +19,7 @@ import '../main.css';
 import '../../styles/layout.css';
 import '../../styles/table.css';
 import '../../styles/pagos.css';
+import '../../styles/caseta.css';
 
 // ── Pestaña: cuotas ─────────────────────────────────────────────────────────
 function PanelCuotas({ propietarios, onCambio }) {
@@ -60,33 +61,6 @@ function PanelCuotas({ propietarios, onCambio }) {
     }
   };
 
-  const columnas = [
-    { key: 'propietario_nombre', label: 'Propietario' },
-    { key: 'concepto', label: 'Concepto', render: conceptoCuota },
-    { key: 'mes_anio', label: 'Periodo', render: c => periodo(c.mes_anio) },
-    { key: 'monto', label: 'Monto', render: c => moneda(c.monto) },
-    {
-      key: 'estado_actual',
-      label: 'Estado',
-      render: c => (
-        <span className={`badge ${CLASE_ESTADO_CUOTA[c.estado_actual]}`}>
-          {ETIQUETA_ESTADO_CUOTA[c.estado_actual]}
-        </span>
-      ),
-    },
-    {
-      key: 'acciones',
-      label: 'Acciones',
-      render: c => (c.estado_actual === 'pagado'
-        ? <span className="campo-ayuda">Pagada</span>
-        : (
-          <button className="access-btn-dark cuota-cobrar" onClick={() => abrirCobro(c)}>
-            <HiBanknotes size={14} /> Cobrar
-          </button>
-        )),
-    },
-  ];
-
   return (
     <>
       <div className="page-actions">
@@ -109,13 +83,39 @@ function PanelCuotas({ propietarios, onCambio }) {
         </div>
       )}
 
-      <DataTable
-        columnas={columnas}
-        filas={datos?.items}
-        cargando={cargando}
-        error={error}
-        vacio="No hay cuotas que coincidan con el filtro"
-      />
+      {cargando && <Spinner />}
+      {error && <p className="table-error">{error}</p>}
+      {datos && datos.items.length === 0 && (
+        <p className="access-empty">No hay cuotas que coincidan con el filtro</p>
+      )}
+
+      {datos && datos.items.length > 0 && (
+        <ul className="caseta-lista cuotas-grid">
+          {datos.items.map(c => (
+            <li key={c.id} className="caseta-item">
+              <div className="caseta-item-info">
+                <span className="caseta-item-nombre">{c.propietario_nombre}</span>
+                <span className="caseta-item-meta">
+                  <span className={`badge ${CLASE_ESTADO_CUOTA[c.estado_actual]}`}>
+                    {ETIQUETA_ESTADO_CUOTA[c.estado_actual]}
+                  </span>
+                  {conceptoCuota(c)}
+                </span>
+                <span className="caseta-item-tiempo">
+                  {periodo(c.mes_anio)} · {moneda(c.monto)}
+                </span>
+              </div>
+              {c.estado_actual === 'pagado'
+                ? <span className="campo-ayuda">Pagada</span>
+                : (
+                  <button className="access-btn-dark cuota-cobrar" style={{ width: '80%' }} onClick={() => abrirCobro(c)}>
+                    <HiBanknotes size={14} /> Cobrar
+                  </button>
+                )}
+            </li>
+          ))}
+        </ul>
+      )}
 
       <Modal isOpen={!!cobrando} onClose={() => setCobrando(null)} title="Registrar pago">
         <form className="new-access-form" onSubmit={handleCobrar}>
@@ -163,26 +163,31 @@ function PanelCuotas({ propietarios, onCambio }) {
 function PanelMorosos() {
   const { datos, cargando, error } = useFetch(listarMorosos, []);
 
-  const columnas = [
-    { key: 'nombre_completo', label: 'Propietario' },
-    { key: 'cuotas_vencidas', label: 'Cuotas vencidas' },
-    { key: 'desde', label: 'Desde', render: m => periodo(m.desde) },
-    {
-      key: 'monto_adeudado',
-      label: 'Adeudo',
-      render: m => <strong className="texto-peligro">{moneda(m.monto_adeudado)}</strong>,
-    },
-    { key: 'telefono', label: 'Contacto', render: m => m.telefono || m.email },
-  ];
-
   return (
-    <DataTable
-      columnas={columnas}
-      filas={datos}
-      cargando={cargando}
-      error={error}
-      vacio="No hay propietarios morosos"
-    />
+    <>
+      {cargando && <Spinner />}
+      {error && <p className="table-error">{error}</p>}
+      {datos && datos.length === 0 && (
+        <p className="access-empty">No hay propietarios con pendientes de pago</p>
+      )}
+
+      {datos && datos.length > 0 && (
+        <ul className="caseta-lista cuotas-grid cuotas-grid--simple">
+          {datos.map(m => (
+            <li key={m.propietario_id} className="caseta-item">
+              <div className="caseta-item-info">
+                <span className="caseta-item-nombre">{m.nombre_completo}</span>
+                <span className="caseta-item-meta">
+                  {m.cuotas_vencidas} cuota{m.cuotas_vencidas === 1 ? '' : 's'} vencida{m.cuotas_vencidas === 1 ? '' : 's'} · Desde {periodo(m.desde)}
+                </span>
+                <span className="caseta-item-tiempo">{m.telefono || m.email}</span>
+              </div>
+              <strong className="texto-peligro">{moneda(m.monto_adeudado)}</strong>
+            </li>
+          ))}
+        </ul>
+      )}
+    </>
   );
 }
 
@@ -199,31 +204,33 @@ function PanelPagos() {
     }
   };
 
-  const columnas = [
-    { key: 'fecha_pago', label: 'Fecha', render: p => fechaCorta(p.fecha_pago) },
-    { key: 'propietario_nombre', label: 'Propietario' },
-    { key: 'concepto', label: 'Concepto', render: conceptoCuota },
-    { key: 'monto_pagado', label: 'Monto', render: p => moneda(p.monto_pagado) },
-    { key: 'metodo', label: 'Método' },
-    {
-      key: 'acciones',
-      label: 'Recibo',
-      render: p => (
-        <button className="icon-btn" onClick={() => handleRecibo(p)} aria-label="Descargar recibo">
-          <HiArrowDownTray size={16} />
-        </button>
-      ),
-    },
-  ];
-
   return (
-    <DataTable
-      columnas={columnas}
-      filas={datos?.items}
-      cargando={cargando}
-      error={error}
-      vacio="Aún no hay pagos registrados"
-    />
+    <>
+      {cargando && <Spinner />}
+      {error && <p className="table-error">{error}</p>}
+      {datos && datos.items.length === 0 && (
+        <p className="access-empty">Aún no hay pagos registrados</p>
+      )}
+
+      {datos && datos.items.length > 0 && (
+        <ul className="caseta-lista cuotas-grid cuotas-grid--simple">
+          {datos.items.map(p => (
+            <li key={p.id} className="caseta-item">
+              <div className="caseta-item-info">
+                <span className="caseta-item-nombre">{p.propietario_nombre}</span>
+                <span className="caseta-item-meta">{conceptoCuota(p)}</span>
+                <span className="caseta-item-tiempo">
+                  {fechaCorta(p.fecha_pago)} · {p.metodo} · {moneda(p.monto_pagado)}
+                </span>
+              </div>
+              <button className="icon-btn" onClick={() => handleRecibo(p)} aria-label="Descargar recibo">
+                <HiArrowDownTray size={16} />
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </>
   );
 }
 
@@ -286,12 +293,12 @@ function Cuotas() {
           <HiPlus size={16} /> Cuota extraordinaria
         </button>
         <button className="access-btn-outline" onClick={handleGenerar} disabled={generando}>
-          <HiArrowPath size={16} /> {generando ? 'Generando…' : 'Generar cuotas del mes'}
+          <HiArrowPath size={16} /> {generando ? 'Generando…' : 'Generar mesuales'}
         </button>
       </div>
 
       <div className="page-body">
-        <Tabs tabs={['Cuotas', 'Morosos', 'Pagos']} key={version}>
+        <Tabs tabs={['Cuotas', 'Vencidos', 'Pagos']} key={version}>
           <PanelCuotas propietarios={props?.items ?? []} onCambio={() => setVersion(v => v + 1)} />
           <PanelMorosos />
           <PanelPagos />

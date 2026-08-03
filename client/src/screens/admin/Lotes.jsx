@@ -2,7 +2,7 @@ import React, { useState, useCallback } from 'react';
 import { HiPlus, HiTrash, HiPencilSquare } from 'react-icons/hi2';
 import { Header } from '../../Components/Header';
 import { Modal } from '../../Components/Modal';
-import { DataTable } from '../../Components/DataTable';
+import { Spinner } from '../../Components/Spinner';
 import { ConfirmModal } from '../../Components/ConfirmModal';
 import MyButton from '../../Components/MyButton';
 import { useFetch } from '../../hooks/useFetch';
@@ -15,6 +15,7 @@ import {
 import '../main.css';
 import '../../styles/layout.css';
 import '../../styles/table.css';
+import '../../styles/caseta.css';
 
 const FORM_VACIO = {
   numero: '', etapa: '', estado: 'disponible',
@@ -109,37 +110,6 @@ function Lotes() {
     }
   };
 
-  const columnas = [
-    { key: 'numero', label: 'Lote' },
-    { key: 'etapa', label: 'Etapa' },
-    {
-      key: 'estado',
-      label: 'Estado',
-      render: l => <span className={`badge ${CLASE_ESTADO[l.estado]}`}>{ETIQUETA_ESTADO[l.estado]}</span>,
-    },
-    { key: 'superficie_m2', label: 'Superficie', render: l => (l.superficie_m2 ? `${l.superficie_m2} m²` : '—') },
-    { key: 'precio', label: 'Precio', render: l => formatearMoneda(l.precio) },
-    { key: 'propietario_nombre', label: 'Propietario', render: l => l.propietario_nombre || '—' },
-    {
-      key: 'acciones',
-      label: 'Acciones',
-      render: l => (
-        <span className="tabla-acciones">
-          <button className="icon-btn" onClick={() => abrirEditar(l)} aria-label={`Editar lote ${l.numero}`}>
-            <HiPencilSquare size={18} />
-          </button>
-          <button
-            className="icon-btn icon-btn--peligro"
-            onClick={() => setPorEliminar(l)}
-            aria-label={`Eliminar lote ${l.numero}`}
-          >
-            <HiTrash size={18} />
-          </button>
-        </span>
-      ),
-    },
-  ];
-
   return (
     <div className="dashboard-page">
       <Header />
@@ -178,13 +148,43 @@ function Lotes() {
       </div>
 
       <div className="page-body">
-        <DataTable
-          columnas={columnas}
-          filas={datos?.items}
-          cargando={cargando}
-          error={error}
-          vacio="No hay lotes que coincidan con el filtro"
-        />
+        {cargando && <Spinner />}
+        {error && <p className="table-error">{error}</p>}
+        {datos && datos.items.length === 0 && (
+          <p className="access-empty">No hay lotes que coincidan con el filtro</p>
+        )}
+
+        {datos && datos.items.length > 0 && (
+          <ul className="caseta-lista">
+            {datos.items.map(l => (
+              <li key={l.id} className="caseta-item">
+                <div className="caseta-item-info">
+                  <span className="caseta-item-nombre">Lote {l.numero}</span>
+                  <span className="caseta-item-meta">
+                    <span className={`badge ${CLASE_ESTADO[l.estado]}`}>{ETIQUETA_ESTADO[l.estado]}</span>
+                    {[l.etapa && `Etapa ${l.etapa}`, l.superficie_m2 && `${l.superficie_m2} m²`]
+                      .filter(Boolean).join(' · ')}
+                  </span>
+                  <span className="caseta-item-tiempo">
+                    {formatearMoneda(l.precio)} · {l.propietario_nombre || 'Sin propietario'}
+                  </span>
+                </div>
+                <span className="tabla-acciones">
+                  <button className="icon-btn" onClick={() => abrirEditar(l)} aria-label={`Editar lote ${l.numero}`}>
+                    <HiPencilSquare size={18} />
+                  </button>
+                  <button
+                    className="icon-btn icon-btn--peligro"
+                    onClick={() => setPorEliminar(l)}
+                    aria-label={`Eliminar lote ${l.numero}`}
+                  >
+                    <HiTrash size={18} />
+                  </button>
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
 
       <Modal isOpen={modal.abierto} onClose={cerrarModal} title={modal.lote ? `Editar ${modal.lote.numero}` : 'Nuevo lote'}>

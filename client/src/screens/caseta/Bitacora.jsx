@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { HiArrowDownTray } from 'react-icons/hi2';
 import { Header } from '../../Components/Header';
-import { DataTable } from '../../Components/DataTable';
+import { Spinner } from '../../Components/Spinner';
 import { useFetch } from '../../hooks/useFetch';
 import { useToast } from '../../context/ToastContext';
 import { mensajeDeError } from '../../lib/apiError';
@@ -12,6 +12,7 @@ import {
 import '../main.css';
 import '../../styles/layout.css';
 import '../../styles/table.css';
+import '../../styles/caseta.css';
 
 function Bitacora() {
   const toast = useToast();
@@ -35,26 +36,6 @@ function Bitacora() {
       setExportando(false);
     }
   };
-
-  const columnas = [
-    { key: 'entrada_at', label: 'Entrada', render: v => formatearFecha(v.entrada_at) },
-    {
-      key: 'salida_at',
-      label: 'Salida',
-      render: v => (v.salida_at
-        ? formatearFecha(v.salida_at)
-        : <span className="badge badge--verde">Dentro</span>),
-    },
-    { key: 'nombre_visitante', label: 'Visitante' },
-    {
-      key: 'tipo',
-      label: 'Tipo',
-      render: v => <span className={`badge ${CLASE_TIPO[v.tipo]}`}>{etiquetaTipo(v.tipo)}</span>,
-    },
-    { key: 'placa_vehiculo', label: 'Placa', render: v => v.placa_vehiculo || '—' },
-    { key: 'lote_numero', label: 'Lote' },
-    { key: 'registrado_por_nombre', label: 'Registró' },
-  ];
 
   return (
     <div className="dashboard-page">
@@ -90,13 +71,35 @@ function Bitacora() {
       </p>
 
       <div className="page-body">
-        <DataTable
-          columnas={columnas}
-          filas={datos?.items}
-          cargando={cargando}
-          error={error}
-          vacio="No hay accesos que coincidan con el filtro"
-        />
+        {cargando && <Spinner />}
+        {error && <p className="table-error">{error}</p>}
+        {datos && datos.items.length === 0 && (
+          <p className="access-empty">No hay accesos que coincidan con el filtro</p>
+        )}
+
+        {datos && datos.items.length > 0 && (
+          <ul className="caseta-lista">
+            {datos.items.map(v => (
+              <li key={v.id} className="caseta-item">
+                <div className="caseta-item-info">
+                  <span className="caseta-item-nombre">{v.nombre_visitante}</span>
+                  <span className="caseta-item-meta">
+                    <span className={`badge ${CLASE_TIPO[v.tipo]}`}>{etiquetaTipo(v.tipo)}</span>
+                    Lote {v.lote_numero}
+                    {v.placa_vehiculo && ` · ${v.placa_vehiculo}`}
+                  </span>
+                  <span className="caseta-item-tiempo">
+                    Entró {formatearFecha(v.entrada_at)}
+                    {v.salida_at && ` · Salió ${formatearFecha(v.salida_at)}`}
+                  </span>
+                </div>
+                {v.salida_at
+                  ? <span className="caseta-item-tiempo">Registró {v.registrado_por_nombre}</span>
+                  : <span className="badge badge--verde">Dentro</span>}
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
     </div>
   );

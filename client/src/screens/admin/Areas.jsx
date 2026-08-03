@@ -1,9 +1,12 @@
 import React, { useState, useCallback } from 'react';
-import { HiPlus, HiPencilSquare, HiTrash } from 'react-icons/hi2';
+import {
+  HiPlus, HiPencilSquare, HiTrash,
+  HiSun, HiBolt, HiMusicalNote, HiTrophy, HiFire, HiFaceSmile, HiSparkles, HiTruck, HiBuildingOffice2,
+} from 'react-icons/hi2';
 import { Header } from '../../Components/Header';
 import { Modal } from '../../Components/Modal';
 import { Tabs } from '../../Components/Tabs';
-import { DataTable } from '../../Components/DataTable';
+import { Spinner } from '../../Components/Spinner';
 import { ConfirmModal } from '../../Components/ConfirmModal';
 import MyButton from '../../Components/MyButton';
 import { useFetch } from '../../hooks/useFetch';
@@ -19,8 +22,25 @@ import '../main.css';
 import '../../styles/layout.css';
 import '../../styles/table.css';
 import '../../styles/reservas.css';
+import '../../styles/caseta.css';
 
 const FORM_VACIO = { nombre: '', capacidad: '', activa: true };
+
+// Icono por tipo de área, según palabras clave en el nombre. No hay un campo
+// "tipo" en el modelo, así que se infiere del nombre para darle identidad
+// visual a cada tarjeta.
+function iconoArea(nombre = '') {
+  const n = nombre.toLowerCase();
+  if (/alberca|piscina|pool/.test(n)) return HiSun;
+  if (/gimnasio|gym/.test(n)) return HiBolt;
+  if (/sal[oó]n|evento|fiesta/.test(n)) return HiMusicalNote;
+  if (/cancha|deportiv|tenis|f[uú]tbol|b[aá]squet/.test(n)) return HiTrophy;
+  if (/asador|parrilla|bbq/.test(n)) return HiFire;
+  if (/parque|juegos|infantil|ni[ñn]os/.test(n)) return HiFaceSmile;
+  if (/jard[ií]n|verde/.test(n)) return HiSparkles;
+  if (/estacionamiento|parking/.test(n)) return HiTruck;
+  return HiBuildingOffice2;
+}
 
 function PanelAreas() {
   const toast = useToast();
@@ -79,35 +99,6 @@ function PanelAreas() {
     }
   };
 
-  const columnas = [
-    { key: 'nombre', label: 'Área' },
-    { key: 'capacidad', label: 'Capacidad', render: a => (a.capacidad ? `${a.capacidad} personas` : '—') },
-    {
-      key: 'activa',
-      label: 'Estado',
-      render: a => (
-        <span className={`badge ${a.activa ? 'badge--verde' : 'badge--gris'}`}>
-          {a.activa ? 'Disponible' : 'Desactivada'}
-        </span>
-      ),
-    },
-    {
-      key: 'acciones',
-      label: 'Acciones',
-      render: a => (
-        <span className="tabla-acciones">
-          <button className="icon-btn" onClick={() => abrir(a)} aria-label={`Editar ${a.nombre}`}>
-            <HiPencilSquare size={17} />
-          </button>
-          <button className="icon-btn icon-btn--peligro" onClick={() => setPorEliminar(a)}
-            aria-label={`Eliminar ${a.nombre}`}>
-            <HiTrash size={17} />
-          </button>
-        </span>
-      ),
-    },
-  ];
-
   return (
     <>
       <div className="page-actions">
@@ -116,8 +107,42 @@ function PanelAreas() {
         </button>
       </div>
 
-      <DataTable columnas={columnas} filas={datos} cargando={cargando} error={error}
-        vacio="No hay áreas comunes registradas" />
+      {cargando && <Spinner />}
+      {error && <p className="table-error">{error}</p>}
+      {datos && datos.length === 0 && (
+        <p className="access-empty">No hay áreas comunes registradas</p>
+      )}
+
+      {datos && datos.length > 0 && (
+        <div className="areas-grid">
+          {datos.map(a => {
+            const Icono = iconoArea(a.nombre);
+            return (
+              <div key={a.id} className="area-card">
+                <div className="area-card-top">
+                  <span className="area-card-icon"><Icono size={22} /></span>
+                  <span className={`badge ${a.activa ? 'badge--verde' : 'badge--gris'}`}>
+                    {a.activa ? 'Disponible' : 'Desactivada'}
+                  </span>
+                </div>
+                <p className="area-card-nombre">{a.nombre}</p>
+                <p className="area-card-capacidad">
+                  {a.capacidad ? `${a.capacidad} personas` : 'Sin límite de aforo'}
+                </p>
+                <span className="tabla-acciones area-card-acciones">
+                  <button className="icon-btn" onClick={() => abrir(a)} aria-label={`Editar ${a.nombre}`}>
+                    <HiPencilSquare size={17} />
+                  </button>
+                  <button className="icon-btn icon-btn--peligro" onClick={() => setPorEliminar(a)}
+                    aria-label={`Eliminar ${a.nombre}`}>
+                    <HiTrash size={17} />
+                  </button>
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       <Modal isOpen={modal.abierto} onClose={() => setModal({ abierto: false, area: null })}
         title={modal.area ? `Editar ${modal.area.nombre}` : 'Nueva área común'}>
@@ -182,36 +207,42 @@ function PanelReservaciones() {
     }
   };
 
-  const columnas = [
-    { key: 'area_nombre', label: 'Área' },
-    { key: 'propietario_nombre', label: 'Propietario' },
-    { key: 'fecha', label: 'Fecha', render: r => fechaLegible(r.fecha) },
-    { key: 'horario', label: 'Horario', render: r => `${hhmm(r.hora_inicio)} – ${hhmm(r.hora_fin)}` },
-    {
-      key: 'estado',
-      label: 'Estado',
-      render: r => (
-        <select className="page-select ticket-select" value={r.estado}
-          onChange={e => handleEstado(r, e.target.value)}>
-          {ESTADOS_RESERVA.map(s => (
-            <option key={s} value={s}>{ETIQUETA_ESTADO_RESERVA[s]}</option>
-          ))}
-        </select>
-      ),
-    },
-  ];
-
   return (
     <>
-      <div className="page-actions">
+      <div className="">
         <select className="page-select" value={estado} onChange={e => setEstado(e.target.value)}>
           <option value="">Todos los estados</option>
           {ESTADOS_RESERVA.map(s => <option key={s} value={s}>{ETIQUETA_ESTADO_RESERVA[s]}</option>)}
         </select>
       </div>
 
-      <DataTable columnas={columnas} filas={datos?.items} cargando={cargando} error={error}
-        vacio="No hay reservaciones" />
+      {cargando && <Spinner />}
+      {error && <p className="table-error">{error}</p>}
+      {datos && datos.items.length === 0 && (
+        <p className="access-empty">No hay reservaciones</p>
+      )}
+
+      {datos && datos.items.length > 0 && (
+        <ul className="caseta-lista">
+          {datos.items.map(r => (
+            <li key={r.id} className="caseta-item">
+              <div className="caseta-item-info">
+                <span className="caseta-item-nombre">{r.area_nombre}</span>
+                <span className="caseta-item-meta">{r.propietario_nombre}</span>
+                <span className="caseta-item-tiempo">
+                  {fechaLegible(r.fecha)} · {hhmm(r.hora_inicio)} – {hhmm(r.hora_fin)}
+                </span>
+              </div>
+              <select className="page-select ticket-select" value={r.estado}
+                onChange={e => handleEstado(r, e.target.value)}>
+                {ESTADOS_RESERVA.map(s => (
+                  <option key={s} value={s}>{ETIQUETA_ESTADO_RESERVA[s]}</option>
+                ))}
+              </select>
+            </li>
+          ))}
+        </ul>
+      )}
     </>
   );
 }

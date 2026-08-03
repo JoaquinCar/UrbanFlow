@@ -95,7 +95,7 @@ function Portal() {
         </div>
 
         {/* Accesos rápidos */}
-        <section>
+        <section className="portal-seccion-ancha">
           <h3 className="section-title">Accesos rápidos</h3>
           <div className="quick-actions-grid">
             <button className="action-card" onClick={() => navigate('/access')}>
