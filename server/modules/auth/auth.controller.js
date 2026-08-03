@@ -1,12 +1,22 @@
 const jwt = require('jsonwebtoken')
 const service = require('./auth.service')
 
-const REFRESH_COOKIE = {
-  httpOnly: true,
-  secure: process.env.NODE_ENV === 'production',
-  sameSite: 'strict',
-  maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days ms
-  path: '/api/auth',
+// La marca Secure depende de si la conexión es realmente cifrada, no de
+// NODE_ENV.
+//
+// Antes iba atada a NODE_ENV=production, y eso rompía el despliegue mientras no
+// hubiera HTTPS: el navegador descarta las cookies Secure recibidas por HTTP,
+// así que la sesión no sobrevivía a un cambio de página. Con req.secure —que
+// Express resuelve leyendo X-Forwarded-Proto gracias a trust proxy— la cookie
+// se marca Secure en cuanto haya HTTPS, sin tener que tocar nada.
+function cookieRefresh(req) {
+  return {
+    httpOnly: true,
+    secure: req.secure,
+    sameSite: 'strict',
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 días en ms
+    path: '/api/auth',
+  }
 }
 
 async function login(req, res, next) {
@@ -16,7 +26,7 @@ async function login(req, res, next) {
       return res.status(400).json({ error: 'Email y contraseña requeridos' })
     }
     const result = await service.login(email, password)
-    res.cookie('refreshToken', result.refreshToken, REFRESH_COOKIE)
+    res.cookie('refreshToken', result.refreshToken, cookieRefresh(req))
     res.json({ accessToken: result.accessToken, user: result.user })
   } catch (err) {
     next(err)
@@ -28,7 +38,7 @@ async function refresh(req, res, next) {
     const token = req.cookies?.refreshToken
     if (!token) return res.status(401).json({ error: 'No autorizado' })
     const result = await service.refresh(token)
-    res.cookie('refreshToken', result.refreshToken, REFRESH_COOKIE)
+    res.cookie('refreshToken', result.refreshToken, cookieRefresh(req))
     res.json({ accessToken: result.accessToken })
   } catch (err) {
     next(err)
