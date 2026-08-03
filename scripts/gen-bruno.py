@@ -108,7 +108,7 @@ vars:secret [
 """)
 
 escribir(f'{RAIZ}/environments/Produccion.bru', """vars {
-  baseUrl: https://CAMBIAR-POR-EL-DOMINIO/api
+  baseUrl: https://urbanflowfullstack.duckdns.org/api
 }
 
 vars:secret [

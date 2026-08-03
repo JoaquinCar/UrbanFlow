@@ -6,6 +6,9 @@ Sistema web para la gestión integral de fraccionamientos residenciales cerrados
 **Stack:** React 18 + Vite · Node.js/Express · PostgreSQL
 **Periodo:** Mayo – Julio 2026
 
+**En producción:** https://urbanflowfullstack.duckdns.org
+(AWS EC2 · nginx · HTTPS con Let's Encrypt — ver [docs/despliegue.md](docs/despliegue.md))
+
 ---
 
 ## Módulos
@@ -149,9 +152,14 @@ npm run smoke --workspace=server                  # en otra
 npm run smoke --workspace=server -- --only=visits # una sola suite
 ```
 
-**167 comprobaciones** contra el servidor real y la base en Docker. Suites:
-`auth`, `fraccionamiento`, `dashboard`, `owners`, `visits`, `payments`,
-`maintenance`, `comms`, `reservations`.
+**183 comprobaciones** contra el servidor real y la base en Docker. Suites:
+`auth`, `errores`, `fraccionamiento`, `dashboard`, `owners`, `visits`,
+`payments`, `maintenance`, `comms`, `reservations`.
+
+La suite `errores` es la que comprueba lo que *no* debe pasar: datos con formato
+inválido, campos faltantes, duplicados, referencias rotas y accesos al
+fraccionamiento de otro. Todos deben responder `4xx` con un mensaje legible,
+nunca `500`.
 
 ### Colección de Bruno
 
@@ -335,6 +343,7 @@ responden con un error explícito en lugar de simular éxito.
 | [docs/db-schema.md](docs/db-schema.md) | Esquema implementado y las restricciones que impiden datos incoherentes |
 | [docs/decisiones.md](docs/decisiones.md) | Decisiones de arquitectura y por qué se tomaron |
 | [docs/pruebas-e2e.md](docs/pruebas-e2e.md) | Guion de prueba manual por rol |
+| [docs/despliegue.md](docs/despliegue.md) | Despliegue en EC2: qué hay montado, por qué, y cómo actualizarlo |
 | [docs/plan-proyecto.md](docs/plan-proyecto.md) | Plan y cronograma del equipo |
 | [bruno/README.md](bruno/README.md) | Colección de Bruno con los 85 endpoints |
 | [docs/modulos/](docs/modulos/) | Un documento por módulo, con las decisiones de cada uno |
