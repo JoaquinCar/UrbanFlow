@@ -13,10 +13,15 @@ RAIZ = 'bruno'
 
 # ── helpers ────────────────────────────────────────────────────────────────
 
+ESCRITOS = []
+
+
 def escribir(ruta, contenido):
     os.makedirs(os.path.dirname(ruta), exist_ok=True)
+    texto = contenido.rstrip() + '\n'
     with open(ruta, 'w', encoding='utf-8') as f:
-        f.write(contenido.rstrip() + '\n')
+        f.write(texto)
+    ESCRITOS.append(texto)
 
 
 def carpeta(nombre, seq):
@@ -91,34 +96,12 @@ escribir(f'{RAIZ}/bruno.json', json.dumps({
     "ignore": ["node_modules", ".git"],
 }, indent=2))
 
-# Los tokens se declaran como secretos: Bruno los guarda en su almacén interno
-# en lugar de escribirlos en este archivo, que sí va al repositorio. Sin esto,
-# cada ejecución dejaba los JWT capturados dentro del .bru y acababan en git.
-escribir(f'{RAIZ}/environments/Local.bru', """vars {
-  baseUrl: http://localhost:3000/api
+# Los entornos se escriben al FINAL, cuando ya se sabe qué variables captura la
+# colección: ver más abajo.
+ENTORNOS = {
+    'Local': 'http://localhost:3000/api',
+    'Produccion': 'https://urbanflowfullstack.duckdns.org/api',
 }
-
-vars:secret [
-  tokenAdmin,
-  tokenVigilante,
-  tokenPropietario,
-  tokenTecnico,
-  qrToken
-]
-""")
-
-escribir(f'{RAIZ}/environments/Produccion.bru', """vars {
-  baseUrl: https://urbanflowfullstack.duckdns.org/api
-}
-
-vars:secret [
-  tokenAdmin,
-  tokenVigilante,
-  tokenPropietario,
-  tokenTecnico,
-  qrToken
-]
-""")
 
 # ── 1. Auth ────────────────────────────────────────────────────────────────
 D = f'{RAIZ}/01 Auth'
@@ -769,6 +752,33 @@ escribir(f'{D}/11 Eliminar area.bru', peticion(
     token='tokenAdmin',
     docs="""Un área con reservaciones registradas no se puede eliminar: la
 respuesta sugiere desactivarla en su lugar."""))
+
+# ── entornos ───────────────────────────────────────────────────────────────
+#
+# Todo lo que las peticiones capturan con bru.setEnvVar se declara SECRETO,
+# aunque casi nada lo sea de verdad. No es por confidencialidad: es porque Bruno
+# guarda las variables normales dentro del propio .bru —que va al repositorio— y
+# las secretas en su almacén local. Sin esto, cada vez que alguien corre la
+# colección aparecen veinte identificadores y algún JWT como cambios sin
+# commitear.
+#
+# La lista se deduce de lo ya generado en vez de escribirse a mano, que es como
+# se coló la primera vez: se declararon los cuatro tokens y el qrToken, y los
+# ~20 identificadores que capturan las demás peticiones quedaron fuera.
+import re as _re_vars
+
+capturadas = sorted({
+    m for texto in ESCRITOS
+    for m in _re_vars.findall(r'bru\.setEnvVar\(\s*"([A-Za-z0-9_]+)"', texto)
+})
+
+for nombre, base in ENTORNOS.items():
+    escribir(f'{RAIZ}/environments/{nombre}.bru',
+             'vars {\n  baseUrl: ' + base + '\n}\n\nvars:secret [\n'
+             + ',\n'.join(f'  {v}' for v in capturadas)
+             + '\n]\n')
+
+print(f'{len(capturadas)} variables declaradas como secretas en los entornos')
 
 # ── resumen ────────────────────────────────────────────────────────────────
 total = sum(
