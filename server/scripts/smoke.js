@@ -1019,6 +1019,48 @@ const SUITES = {
       r6.status === 201 && r6.data.estado === 'pendiente', r6.data)
     const reservaId = r6.data?.id
 
+    // ── el admin reserva a nombre de un propietario ──
+    // Es el caso de quien pide la reserva por teléfono o en ventanilla. El
+    // backend lo admitía desde el principio pero no había pantalla que lo
+    // usara, así que este camino nunca se había probado.
+    const otros = await req('GET', '/propietarios?limit=5', { token: ctx.admin })
+    const otroProp = otros.data.items.find(p => p.email !== 'propietario@urbanflow.test')
+      ?? otros.data.items[0]
+
+    const r6b = await req('POST', '/reservaciones', {
+      token: ctx.admin,
+      body: { propietario_id: otroProp.id, area_id: areaQa, fecha, hora_inicio: '15:00', hora_fin: '16:00' },
+    })
+    check('el admin reserva a nombre de un propietario → 201',
+      r6b.status === 201 && r6b.data.propietario_id === otroProp.id, r6b.data)
+
+    // El propietario no puede colar un propietario_id ajeno: resolverPropietario
+    // solo lo respeta si quien pide es admin, si no usa su propia ficha.
+    const r6c = await req('POST', '/reservaciones', {
+      token: ctx.propietario,
+      body: { propietario_id: otroProp.id, area_id: areaQa, fecha, hora_inicio: '17:00', hora_fin: '18:00' },
+    })
+    check('un propietario no puede reservar a nombre de otro',
+      r6c.status === 201 && r6c.data.propietario_id !== otroProp.id, r6c.data)
+
+    // Aislamiento entre fraccionamientos. Se prueba al revés —el admin del
+    // segundo intentando reservar para un propietario del primero— porque en el
+    // seed el segundo fraccionamiento no tiene propietarios, y así se usa un id
+    // que existe de verdad en vez de uno inventado. resolverPropietario filtra
+    // por fraccionamiento_id, así que para él no existe.
+    const r6d = await req('POST', '/reservaciones', {
+      token: ctx.admin2,
+      body: { propietario_id: otroProp.id, area_id: areaQa, fecha, hora_inicio: '19:00', hora_fin: '20:00' },
+    })
+    check('el admin de otro fraccionamiento no reserva para un propietario ajeno → 404',
+      r6d.status === 404, r6d.data)
+
+    // Se retiran: las pruebas de más abajo cuentan las franjas ocupadas del
+    // área y acaban borrándola, así que deben encontrarla como estaba.
+    for (const id of [r6b.data?.id, r6c.data?.id]) {
+      if (id) await req('DELETE', `/reservaciones/${id}`, { token: ctx.admin })
+    }
+
     const r7 = await req('POST', '/reservaciones', {
       token: ctx.propietario,
       body: { area_id: areaQa, fecha, hora_inicio: '11:00', hora_fin: '13:00' },
@@ -1134,6 +1176,10 @@ async function main() {
     vigilante: await login('vigilante@urbanflow.test'),
     propietario: await login('propietario@urbanflow.test'),
     tecnico: await login('tecnico@urbanflow.test'),
+    // Admin del SEGUNDO fraccionamiento: sirve para comprobar el aislamiento
+    // entre fraccionamientos usando datos que de verdad existen pero que el
+    // primero no debe poder tocar.
+    admin2: await login('admin2@urbanflow.test'),
   }
 
   // Algunas pruebas necesitan el id del admin (por ejemplo, para comprobar que

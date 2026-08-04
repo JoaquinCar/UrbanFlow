@@ -152,7 +152,7 @@ npm run smoke --workspace=server                  # en otra
 npm run smoke --workspace=server -- --only=visits # una sola suite
 ```
 
-**190 comprobaciones** contra el servidor real y la base en Docker. Suites:
+**193 comprobaciones** contra el servidor real y la base en Docker. Suites:
 `auth`, `errores`, `fraccionamiento`, `dashboard`, `owners`, `visits`,
 `payments`, `maintenance`, `comms`, `reservations`.
 
