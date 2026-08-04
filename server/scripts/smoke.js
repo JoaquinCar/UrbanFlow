@@ -107,6 +107,36 @@ const SUITES = {
     })
     check('login con password incorrecto → 401', r2.status === 401, r2.data)
 
+    // El freno de fuerza bruta solo debe contar los intentos FALLIDOS. Limitar
+    // también a quien acierta no protege de nada —ya tiene la contraseña— y en
+    // cambio deja fuera el uso normal: cuatro roles desde la misma IP, una
+    // colección de peticiones que inicia sesión al arrancar, o varias personas
+    // tras el mismo NAT.
+    //
+    // Se lee el contador que publica el propio limitador en vez de agotarlo a
+    // base de intentos: así la prueba vale igual con el tope en 10 que en 500, y
+    // no deja el login bloqueado un cuarto de hora para el resto de la suite.
+    const restantes = (r) => parseInt(r.headers.get('ratelimit-remaining'), 10)
+
+    const acierto1 = await req('POST', '/auth/login', {
+      body: { email: 'admin@urbanflow.test', password: PASSWORD },
+    })
+    const acierto2 = await req('POST', '/auth/login', {
+      body: { email: 'admin@urbanflow.test', password: PASSWORD },
+    })
+    check('un login correcto no consume cuota del freno de fuerza bruta',
+      Number.isFinite(restantes(acierto1)) && restantes(acierto1) === restantes(acierto2),
+      `${restantes(acierto1)} → ${restantes(acierto2)}`)
+
+    const fallo1 = await req('POST', '/auth/login', {
+      body: { email: 'admin@urbanflow.test', password: 'otra-incorrecta' },
+    })
+    const fallo2 = await req('POST', '/auth/login', {
+      body: { email: 'admin@urbanflow.test', password: 'otra-incorrecta' },
+    })
+    check('un login fallido sí la consume',
+      restantes(fallo2) < restantes(fallo1), `${restantes(fallo1)} → ${restantes(fallo2)}`)
+
     const r3 = await req('GET', '/auth/me', { token: ctx.admin })
     check('/me con token → 200 y trae fraccionamiento_id', r3.status === 200 && !!r3.data.fraccionamiento_id, r3.data)
 
