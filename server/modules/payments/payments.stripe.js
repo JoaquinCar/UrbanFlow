@@ -68,7 +68,16 @@ async function crearPreferencia({ cuota, propietario }) {
     client_reference_id: cuota.id,
     metadata: { cuota_id: cuota.id },
     payment_intent_data: { metadata: { cuota_id: cuota.id } },
-    customer_email: propietario.email || undefined,
+    // NO se manda customer_email a propósito, aunque lo tengamos.
+    //
+    // Si el correo ya tiene cuenta de Stripe Link —y muchos la tienen—, Stripe
+    // salta directo a "Confirm it's you" y pide un código por SMS en lugar de
+    // enseñar el formulario de tarjeta. Para un residente que solo quiere pagar
+    // su cuota con una tarjeta, eso es un muro.
+    //
+    // Comprobado en el checkout real: con customer_email no aparece el campo de
+    // tarjeta; sin él, sale el formulario normal con su propio campo de correo.
+    // Stripe lo pide igual para el recibo, así que no se pierde nada.
     line_items: [{
       quantity: 1,
       price_data: {

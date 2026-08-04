@@ -722,6 +722,11 @@ const SUITES = {
         c => c.id !== cuotaPendiente.id && c.concepto === 'QA prueba extraordinaria'
       ) || pendientesAhora.data.items[1]
 
+      // La referencia cambia en cada corrida. Con una fija, el índice único
+      // parcial sobre referencia_mp hacía que la segunda vez el pago se
+      // considerara duplicado y la prueba fallara sin que nada estuviera roto.
+      // Es el mismo mecanismo que se comprueba abajo, así que tenía gracia.
+      const refPago = `pi_test_qa_${Date.now()}`
       const evento = JSON.stringify({
         id: 'evt_qa_smoke',
         type: 'checkout.session.completed',
@@ -729,7 +734,7 @@ const SUITES = {
           object: {
             id: 'cs_test_qa_smoke',
             client_reference_id: paraWebhook.id,
-            payment_intent: 'pi_test_qa_smoke',
+            payment_intent: refPago,
             amount_total: Math.round(Number(paraWebhook.monto) * 100),
           },
         },
