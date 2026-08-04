@@ -19,7 +19,7 @@ Sistema web para la gestión integral de fraccionamientos residenciales cerrados
 | 2 | Lotes + Mapa SVG interactivo | Miroslava Moheno | ✅ |
 | 3 | Propietarios + Documentos | Joaquín Carmona | ✅ |
 | 4 | Visitas + Caseta + QR + Socket.io | Joaquín Carmona | ✅ |
-| 5 | Cuotas + Pagos + PDF + MercadoPago | Jorge Ruiz | ✅ |
+| 5 | Cuotas + Pagos + PDF + Stripe | Jorge Ruiz | ✅ |
 | 6 | Mantenimiento + Tickets | Jorge Ruiz | ✅ |
 | 7 | Comunicados Email + WhatsApp | Joaquín Carmona | ✅ |
 | 8 | Reserva de áreas comunes | Miroslava Moheno | ✅ |
@@ -152,7 +152,7 @@ npm run smoke --workspace=server                  # en otra
 npm run smoke --workspace=server -- --only=visits # una sola suite
 ```
 
-**183 comprobaciones** contra el servidor real y la base en Docker. Suites:
+**190 comprobaciones** contra el servidor real y la base en Docker. Suites:
 `auth`, `errores`, `fraccionamiento`, `dashboard`, `owners`, `visits`,
 `payments`, `maintenance`, `comms`, `reservations`.
 
@@ -261,7 +261,7 @@ que varias peticiones caducando a la vez disparen refresh en paralelo.
 
 | Método | Ruta | Rol |
 |--------|------|-----|
-| POST | `/webhook` | **ninguno** (firma HMAC de MercadoPago) |
+| POST | `/webhook` | **ninguno** (firma HMAC de Stripe) |
 | GET | `/cuotas`, `/cuotas/:propietarioId`, `/morosos`, `/` | admin |
 | GET | `/cuotas/mias` | propietario |
 | POST | `/cuotas`, `/cuotas/generar`, `/manual` | admin |
@@ -310,7 +310,7 @@ responden con un error explícito en lugar de simular éxito.
 
 | Servicio | Variables | Sin configurar |
 |---|---|---|
-| MercadoPago | `MP_ACCESS_TOKEN`, `MP_WEBHOOK_SECRET` | El checkout responde `500` diciendo qué falta |
+| Stripe | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` | El checkout responde `500` diciendo qué falta |
 | Correo | `SMTP_HOST`, `SMTP_USER`, `SMTP_PASS` | El comunicado se guarda; el resultado marca el canal como fallido |
 | WhatsApp | `META_PHONE_NUMBER_ID`, `META_ACCESS_TOKEN` | Igual que el correo |
 | Swagger UI | — | Siempre disponible en `/api/docs` |

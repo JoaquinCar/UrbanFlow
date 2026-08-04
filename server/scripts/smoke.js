@@ -25,7 +25,7 @@ function guardarCookies(res) {
   }
 }
 
-async function req(metodo, ruta, { body, token, form, headers: extra } = {}) {
+async function req(metodo, ruta, { body, token, form, headers: extra, crudo } = {}) {
   const headers = { ...extra }
   if (token) headers.Authorization = `Bearer ${token}`
   if (cookies.size) headers.Cookie = [...cookies].map(([k, v]) => `${k}=${v}`).join('; ')
@@ -33,6 +33,12 @@ async function req(metodo, ruta, { body, token, form, headers: extra } = {}) {
   let payload
   if (form) {
     payload = form
+  } else if (crudo !== undefined) {
+    // Cuerpo exacto, sin volver a serializar. Lo necesita el webhook de Stripe:
+    // la firma se calcula sobre unos bytes concretos y un JSON.stringify de más
+    // los cambiaría.
+    headers['Content-Type'] = 'application/json'
+    payload = crudo
   } else if (body !== undefined) {
     headers['Content-Type'] = 'application/json'
     payload = JSON.stringify(body)
@@ -67,6 +73,18 @@ function check(nombre, cond, extra) {
     fallos++
     console.error(`  ✗ ${nombre}`, extra === undefined ? '' : JSON.stringify(extra)?.slice(0, 300))
   }
+}
+
+// Cabecera 'stripe-signature' auténtica. Stripe firma "<timestamp>.<cuerpo>"
+// con HMAC-SHA256 y el secreto del endpoint; se reproduce aquí con crypto para
+// poder probar el camino del webhook VÁLIDO, que es el que de verdad cobra.
+function firmaStripe(cuerpo, secreto) {
+  const t = Math.floor(Date.now() / 1000)
+  const v1 = require('crypto')
+    .createHmac('sha256', secreto)
+    .update(`${t}.${cuerpo}`)
+    .digest('hex')
+  return `t=${t},v1=${v1}`
 }
 
 async function login(email) {
@@ -663,14 +681,79 @@ const SUITES = {
     const r18 = await req('POST', '/pagos/checkout', {
       token: ctx.admin, body: { cuota_id: cuotaPendiente.id },
     })
-    if (process.env.VEXOR_PROJECT || process.env.STRIPE_SECRET_KEY) {
+    if (process.env.STRIPE_SECRET_KEY) {
       check('checkout devuelve una URL de pago',
         r18.status === 201 && !!(r18.data.init_point || r18.data.url), r18.data)
+
+      // Que devuelva una URL no basta: durante un tiempo el checkout creó
+      // sesiones perfectamente válidas que cobraban en dólares y no llevaban
+      // ninguna referencia a la cuota, así que el webhook no podía saber qué
+      // marcar como pagado. Se comprueba la sesión REAL en Stripe.
+      const sesion = await new (require('stripe'))(process.env.STRIPE_SECRET_KEY)
+        .checkout.sessions.retrieve(r18.data.preference_id).catch(err => ({ error: err.message }))
+
+      const monedaEsperada = (process.env.STRIPE_CURRENCY || process.env.MP_CURRENCY || 'mxn').toLowerCase()
+      check('la sesión de Stripe cobra en la moneda configurada',
+        sesion.currency === monedaEsperada, { esperada: monedaEsperada, recibida: sesion.currency })
+
+      check('la sesión de Stripe cobra el monto de la cuota',
+        sesion.amount_total === Math.round(Number(cuotaPendiente.monto) * 100),
+        { cuota: cuotaPendiente.monto, sesion: sesion.amount_total })
+
+      check('la sesión de Stripe referencia la cuota, para poder conciliarla',
+        sesion.client_reference_id === cuotaPendiente.id && sesion.metadata?.cuota_id === cuotaPendiente.id,
+        { client_reference_id: sesion.client_reference_id, metadata: sesion.metadata })
+
+      check('las URLs de retorno no apuntan a una máquina local',
+        !/localhost|127\.0\.0\.1/.test(String(sesion.success_url)) || process.env.NODE_ENV !== 'production',
+        sesion.success_url)
     } else {
       // Sin credenciales responde un error explícito diciendo qué falta, en
       // lugar de fingir un pago que no existe.
       check('sin credenciales el checkout dice exactamente qué falta',
-        r18.status === 500 && /VEXOR_|STRIPE_.*no configurad/.test(r18.data.error ?? ''), r18.data)
+        r18.status === 500 && /STRIPE_.*no configurad/.test(r18.data.error ?? ''), r18.data)
+    }
+
+    // ── webhook VÁLIDO: el camino que de verdad cobra ──
+    // Las pruebas de arriba solo comprobaban que una firma falsa se rechaza.
+    // Eso deja sin cubrir lo importante: que una firma buena marque la cuota.
+    if (process.env.STRIPE_WEBHOOK_SECRET) {
+      const paraWebhook = pendientesAhora.data.items.find(
+        c => c.id !== cuotaPendiente.id && c.concepto === 'QA prueba extraordinaria'
+      ) || pendientesAhora.data.items[1]
+
+      const evento = JSON.stringify({
+        id: 'evt_qa_smoke',
+        type: 'checkout.session.completed',
+        data: {
+          object: {
+            id: 'cs_test_qa_smoke',
+            client_reference_id: paraWebhook.id,
+            payment_intent: 'pi_test_qa_smoke',
+            amount_total: Math.round(Number(paraWebhook.monto) * 100),
+          },
+        },
+      })
+      const firma = firmaStripe(evento, process.env.STRIPE_WEBHOOK_SECRET)
+
+      const r18b = await req('POST', '/pagos/webhook', {
+        crudo: evento, headers: { 'stripe-signature': firma },
+      })
+      check('webhook con firma válida registra el pago',
+        r18b.status === 200 && r18b.data.registrado === true, r18b.data)
+
+      const trasWebhook = await req('GET', `/pagos/cuotas/${paraWebhook.propietario_id}`, { token: ctx.admin })
+      check('la cuota queda pagada tras el webhook',
+        trasWebhook.data.cuotas.find(c => c.id === paraWebhook.id)?.estado === 'pagado',
+        trasWebhook.data.cuotas.find(c => c.id === paraWebhook.id)?.estado)
+
+      // Stripe reintenta los avisos que no confirma a tiempo. Sin la clave
+      // única parcial sobre referencia_mp, cada reintento sería un pago más.
+      const r18c = await req('POST', '/pagos/webhook', {
+        crudo: evento, headers: { 'stripe-signature': firmaStripe(evento, process.env.STRIPE_WEBHOOK_SECRET) },
+      })
+      check('reenviar el mismo webhook no duplica el pago',
+        r18c.status === 200 && r18c.data.duplicado === true, r18c.data)
     }
 
     const r19 = await req('POST', '/pagos/checkout', { token: ctx.admin, body: {} })
