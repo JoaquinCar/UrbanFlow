@@ -4,10 +4,24 @@ const router = express.Router()
 const controller = require('./auth.controller')
 const { authGuard } = require('../../shared/middleware/auth.middleware')
 
+// Freno a la fuerza bruta sobre el login.
+//
+// Solo cuentan los intentos FALLIDOS. Limitar también los que aciertan no
+// protege de nada —quien acierta ya tiene la contraseña— y en cambio castiga el
+// uso normal: cuatro roles distintos desde la misma IP, una colección de
+// peticiones que inicia sesión al principio, o varias personas tras el mismo
+// NAT agotaban la cuota en minutos y se quedaban fuera un cuarto de hora.
+// La ventana es de 5 minutos y no de 15: quince deja fuera a alguien que se
+// equivocó de contraseña un rato largo, y contra la fuerza bruta la diferencia
+// es irrelevante —diez intentos cada cinco minutos siguen siendo dos por
+// minuto, nada para adivinar una contraseña—.
+const VENTANA_MIN = parseInt(process.env.LOGIN_VENTANA_MIN, 10) || 5
+
 const loginLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
+  windowMs: VENTANA_MIN * 60 * 1000,
   max: parseInt(process.env.LOGIN_MAX_INTENTOS, 10) || 10,
-  message: { error: 'Demasiados intentos. Intenta de nuevo en 15 minutos.' },
+  skipSuccessfulRequests: true,
+  message: { error: `Demasiados intentos fallidos. Intenta de nuevo en ${VENTANA_MIN} minutos.` },
   standardHeaders: true,
   legacyHeaders: false,
 })
