@@ -35,26 +35,48 @@
   color: white;
 }
 
-/* Onboarding */
+/* Onboarding
+
+   La tarjeta fija su propia altura en vez de heredarla.
+   Antes era height: 100%, que solo resolvía mientras se veía la splash: en ese
+   momento .app-container lleva --fijo (height: 100vh). Al desaparecer la splash
+   el contenedor se queda con min-height, o sea altura automática, y un
+   porcentaje contra altura automática no resuelve. Las proporciones flex de
+   abajo dejaban de aplicarse y la imagen volvía a su relación de aspecto
+   natural: en escritorio salía de 1170 × 1543 px, más alta que la pantalla, y
+   empujaba el título y el botón fuera de la vista.
+
+   dvh va después de vh a propósito: en móvil descuenta la barra del navegador,
+   y los navegadores que no lo entiendan se quedan con la línea anterior. */
 .onboarding-card {
-  height: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   flex-direction: column;
 }
 
+/* Alto explícito en vez de una proporción flex.
+   Con flex: 1.2 la imagen competía con el texto por el espacio, y el texto tiene
+   un alto mínimo que no se puede encoger: entre los dos se pasaban de la
+   pantalla y el botón «Siguiente» quedaba por debajo del borde. Fijando la
+   franja de la imagen, lo que sobra es siempre para el contenido. */
 .onboarding-image-container {
-  flex: 1.2; /* Toma más espacio superior */
+  flex: 0 0 auto;
+  height: 45vh;
+  min-height: 200px;
+  max-height: 420px;
   overflow: hidden;
 }
 
 .onboarding-image {
+  display: block;
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
 
 .onboarding-content {
-  flex: 1;
+  flex: 1 1 auto;
   padding: 2rem;
   display: flex;
   flex-direction: column;
