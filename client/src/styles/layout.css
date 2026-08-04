@@ -57,6 +57,23 @@
     margin: 0 auto;
     width: 100%;
   }
+
+  /* El ensanchado de arriba existe para las vistas con menú lateral. El
+     onboarding y las pantallas de acceso (login, recuperar contraseña) no lo
+     tienen, así que en escritorio se les reservaba una franja de 270 px vacía a
+     la izquierda —que descentraba el formulario— y se estiraban a todo el
+     ancho. Se les devuelve la columna centrada.
+
+     Con :has() porque el contenedor es común a todas las pantallas y no sabe
+     cuál está dentro. Si un navegador no lo soporta, simplemente no aplica: se
+     vuelve al ancho completo, que ya no rompe nada desde que la tarjeta fija su
+     propia altura. */
+  .app-container:has(.onboarding-card),
+  .app-container:has(.auth-page) {
+    max-width: 450px;
+    padding-left: 0;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
 }
 
 /* Contenedor de acciones de una pantalla (buscador + botón "Nuevo"). */
