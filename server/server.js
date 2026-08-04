@@ -96,16 +96,16 @@ app.set('io', io)
 const { iniciarCronCuotas } = require('./shared/jobs/cuota-cron')
 iniciarCronCuotas()
 
-// Redirección de regreso de MercadoPago: las back_urls apuntan al backend
-// (HTTPS de ngrok, que MP valida), y estas rutas redirigen al navegador al
-// frontend React donde vive la pantalla PaymentResult.
-const redirFrontend = (req, res) => {
-  const frontendBase = process.env.CLIENT_URL || 'http://localhost:5173'
-  res.redirect(`${frontendBase}${req.originalUrl}`)
-}
-app.get('/pagos/exito', redirFrontend)
-app.get('/pagos/error', redirFrontend)
-app.get('/pagos/pendiente', redirFrontend)
+// Aquí vivían /pagos/exito, /pagos/error y /pagos/pendiente, que rebotaban el
+// navegador hacia CLIENT_URL. Existían porque MercadoPago exigía que las
+// back_urls fueran HTTPS públicas y en local la única que había era la de
+// ngrok, apuntando al backend.
+//
+// En producción el backend y el cliente comparten origen, así que el rebote se
+// redirigía a sí mismo: bucle infinito y ERR_TOO_MANY_REDIRECTS justo al volver
+// de pagar. Y ya no hacen falta: STRIPE_BACK_URL_* apunta directamente al
+// cliente, que es quien tiene la pantalla. Las rutas se sirven como cualquier
+// otra del SPA.
 
 // 404 — cualquier ruta /api no reconocida. Va antes del errorHandler para que
 // el cliente reciba JSON y no el HTML por defecto de Express.
