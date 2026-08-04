@@ -32,6 +32,12 @@ Las peticiones **encadenan sus datos solas**: al listar lotes se guarda un id de
 lote, al listar propietarios uno de propietario, y así. Por eso conviene
 ejecutar cada carpeta en orden la primera vez.
 
+> Todo lo que capturan las peticiones está declarado como **variable secreta**,
+> aunque casi nada lo sea. No es por confidencialidad: Bruno guarda las
+> variables normales dentro del propio archivo del entorno —que va al
+> repositorio— y las secretas en su almacén local. Sin eso, correr la colección
+> deja veinte identificadores y algún token como cambios sin commitear.
+
 ## Qué hay en cada carpeta
 
 | Carpeta | Contenido |
