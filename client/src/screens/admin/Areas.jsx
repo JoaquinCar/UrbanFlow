@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import {
-  HiPlus, HiPencilSquare, HiTrash,
+  HiPlus, HiPencilSquare, HiTrash, HiCalendarDays,
   HiSun, HiBolt, HiMusicalNote, HiTrophy, HiFire, HiFaceSmile, HiSparkles, HiTruck, HiBuildingOffice2,
 } from 'react-icons/hi2';
 import { Header } from '../../Components/Header';
@@ -8,15 +8,18 @@ import { Modal } from '../../Components/Modal';
 import { Tabs } from '../../Components/Tabs';
 import { Spinner } from '../../Components/Spinner';
 import { ConfirmModal } from '../../Components/ConfirmModal';
+import { Calendario } from '../../Components/Calendario';
 import MyButton from '../../Components/MyButton';
 import { useFetch } from '../../hooks/useFetch';
 import { useToast } from '../../context/ToastContext';
 import { mensajeDeError } from '../../lib/apiError';
+import { listarPropietarios } from '../../api/propietarios';
 import {
   listarAreas, crearArea, actualizarArea, eliminarArea,
-  listarReservaciones, cambiarEstadoReservacion, cancelarReservacion,
-  ESTADOS_RESERVA, ETIQUETA_ESTADO_RESERVA, CLASE_ESTADO_RESERVA,
-  hhmm, fechaLegible,
+  listarReservaciones, crearReservacion, cambiarEstadoReservacion, cancelarReservacion,
+  obtenerDisponibilidad,
+  ESTADOS_RESERVA, ETIQUETA_ESTADO_RESERVA, CLASE_ESTADO_RESERVA, HORAS,
+  hhmm, fechaLegible, hoyIso,
 } from '../../api/reservaciones';
 import '../main.css';
 import '../../styles/layout.css';
@@ -190,9 +193,145 @@ function PanelAreas() {
   );
 }
 
+// Reservar a nombre de un propietario.
+//
+// El backend lo admite desde el principio: POST /reservaciones acepta el rol
+// admin y un propietario_id, y resolverPropietario() comprueba que ese
+// propietario sea del mismo fraccionamiento. Lo que faltaba era la pantalla —
+// desde aquí solo se podían listar y cambiar de estado las que ya existían.
+//
+// Es el caso real de la caseta o la administración apuntando la reserva de
+// quien la pide por teléfono o en ventanilla.
+function ModalNuevaReservacion({ abierto, onCerrar, onCreada }) {
+  const { datos: areas } = useFetch(() => listarAreas({ activa: true }), []);
+  const { datos: propietarios } = useFetch(() => listarPropietarios({ limit: 300 }), []);
+
+  const [propietarioId, setPropietarioId] = useState('');
+  const [areaId, setAreaId] = useState('');
+  const [fecha, setFecha] = useState(hoyIso());
+  const [seleccion, setSeleccion] = useState(null);
+  const [guardando, setGuardando] = useState(false);
+  const [errorForm, setErrorForm] = useState('');
+
+  const cargarDisponibilidad = useCallback(
+    () => (areaId && fecha ? obtenerDisponibilidad(areaId, fecha) : Promise.resolve(null)),
+    [areaId, fecha]
+  );
+  const { datos: disponibilidad, cargando: cargandoDisp, recargar: recargarDisp } =
+    useFetch(cargarDisponibilidad, [areaId, fecha]);
+
+  // Mismo gesto que en el portal: un toque fija el inicio, el siguiente el fin.
+  const handleFranja = (hora) => {
+    setErrorForm('');
+    if (!seleccion || seleccion.fin) {
+      setSeleccion({ inicio: hora, fin: HORAS[HORAS.indexOf(hora) + 1] ?? '23:00' });
+      return;
+    }
+    if (hora <= seleccion.inicio) {
+      setSeleccion({ inicio: hora, fin: HORAS[HORAS.indexOf(hora) + 1] ?? '23:00' });
+      return;
+    }
+    setSeleccion({ inicio: seleccion.inicio, fin: hora });
+  };
+
+  const handleGuardar = async (e) => {
+    e.preventDefault();
+    if (!propietarioId) return setErrorForm('Elige a nombre de qué propietario va la reservación');
+    if (!areaId) return setErrorForm('Elige un área');
+    if (!seleccion) return setErrorForm('Selecciona una franja horaria en el calendario');
+
+    setGuardando(true);
+    setErrorForm('');
+    try {
+      await crearReservacion({
+        propietario_id: propietarioId,
+        area_id: areaId,
+        fecha,
+        hora_inicio: seleccion.inicio,
+        hora_fin: seleccion.fin,
+      });
+      onCreada();
+      onCerrar();
+    } catch (err) {
+      setErrorForm(mensajeDeError(err));
+      // Pudo chocar con una reserva creada mientras se elegía el horario.
+      recargarDisp();
+    } finally {
+      setGuardando(false);
+    }
+  };
+
+  const listaPropietarios = propietarios?.items ?? propietarios ?? [];
+
+  return (
+    <Modal isOpen={abierto} onClose={onCerrar} title="Nueva reservación">
+      <form className="new-access-form" onSubmit={handleGuardar}>
+        {errorForm && <p className="form-error">{errorForm}</p>}
+
+        <label className="new-access-field">
+          Propietario
+          <select className="new-access-input" value={propietarioId}
+            onChange={e => setPropietarioId(e.target.value)}>
+            <option value="">Selecciona…</option>
+            {listaPropietarios.map(p => (
+              <option key={p.id} value={p.id}>{p.nombre_completo}</option>
+            ))}
+          </select>
+        </label>
+
+        <label className="new-access-field">
+          Área
+          <select className="new-access-input" value={areaId}
+            onChange={e => { setAreaId(e.target.value); setSeleccion(null); }}>
+            <option value="">Selecciona…</option>
+            {(areas ?? []).map(a => (
+              <option key={a.id} value={a.id}>
+                {a.nombre}{a.capacidad ? ` (hasta ${a.capacidad} personas)` : ''}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label className="new-access-field">
+          Fecha
+          <input className="new-access-input" type="date" value={fecha} min={hoyIso()}
+            onChange={e => { setFecha(e.target.value); setSeleccion(null); }} />
+        </label>
+
+        <div className="new-access-field">
+          Horario
+          <Calendario
+            ocupado={disponibilidad?.ocupado ?? []}
+            cargando={cargandoDisp}
+            seleccion={seleccion}
+            onSeleccionar={handleFranja}
+          />
+          <span className="campo-ayuda">
+            {areaId
+              ? 'Toca una hora para el inicio y otra para el fin. Las franjas en gris ya están reservadas.'
+              : 'Elige un área para ver qué horas están libres.'}
+          </span>
+        </div>
+
+        {seleccion && (
+          <p className="reserva-resumen">
+            {fechaLegible(fecha)} de <strong>{seleccion.inicio}</strong> a{' '}
+            <strong>{seleccion.fin}</strong>
+          </p>
+        )}
+
+        <MyButton type="submit" disabled={guardando}>
+          {guardando ? 'Guardando…' : 'Crear reservación'}
+        </MyButton>
+      </form>
+    </Modal>
+  );
+}
+
 function PanelReservaciones() {
   const toast = useToast();
   const [estado, setEstado] = useState('');
+  const [nueva, setNueva] = useState(false);
   const cargar = useCallback(() => listarReservaciones({ estado, limit: 300 }), [estado]);
   const { datos, cargando, error, recargar } = useFetch(cargar, [estado]);
 
@@ -209,12 +348,24 @@ function PanelReservaciones() {
 
   return (
     <>
+      <div className="page-actions">
+        <button className="access-btn-dark" onClick={() => setNueva(true)}>
+          <HiCalendarDays size={16} /> Nueva reservación
+        </button>
+      </div>
+
       <div className="">
         <select className="page-select" value={estado} onChange={e => setEstado(e.target.value)}>
           <option value="">Todos los estados</option>
           {ESTADOS_RESERVA.map(s => <option key={s} value={s}>{ETIQUETA_ESTADO_RESERVA[s]}</option>)}
         </select>
       </div>
+
+      <ModalNuevaReservacion
+        abierto={nueva}
+        onCerrar={() => setNueva(false)}
+        onCreada={() => { toast.exito('Reservación creada'); recargar(); }}
+      />
 
       {cargando && <Spinner />}
       {error && <p className="table-error">{error}</p>}
