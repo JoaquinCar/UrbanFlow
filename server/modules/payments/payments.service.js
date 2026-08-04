@@ -1,7 +1,7 @@
 const pool = require('../../shared/db/pool')
 const { httpError } = require('../../shared/utils/errors')
 const { generarCuotasMensuales } = require('../../shared/jobs/cuota-cron')
-const mp = require('./payments.vexorpay')
+const mp = require('./payments.stripe')
 
 const METODOS_MANUALES = ['efectivo', 'transferencia']
 
