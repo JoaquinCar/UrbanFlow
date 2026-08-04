@@ -116,6 +116,17 @@
 
 @media (min-width: 768px) {
   .page-actions { padding: 0 2rem 1rem; }
+
+  /* .access-btn-dark nace con flex: 1 porque en móvil ocupa el ancho de la
+     pantalla, que es lo que pide el diseño. En escritorio eso lo estiraba a
+     ochocientos y pico píxeles y dejaba de leerse como un botón: parecía una
+     barra negra de cabecera. El "Nuevo" de Comunicados pasaba desapercibido
+     justamente por eso. Aquí se ajusta a su contenido. */
+  .page-actions .access-btn-dark {
+    flex: 0 0 auto;
+    padding-left: 1.25rem;
+    padding-right: 1.25rem;
+  }
 }
 
 /* Encabezado de página con contador */
