@@ -35,8 +35,12 @@ export const NAV_ITEMS = [
   { label: 'Mantenimiento',       icon: HiWrenchScrewdriver,     path: '/mantenimiento', roles: ['admin', 'tecnico', 'propietario'] },
   { label: 'Áreas comunes',       icon: HiCalendarDays,          path: '/areas',         roles: ['admin'] },
   { label: 'Reservar área',       icon: HiCalendarDays,          path: '/reservas',      roles: ['propietario'] },
+  // El admin NO ve "Avisos": sería un duplicado peor de "Comunicados", que
+  // muestra los mismos comunicados y además deja publicarlos y ver a cuántos
+  // llegó cada uno. Tener las dos entradas hacía que buscara el botón de
+  // publicar en la que se llama "Avisos", que es la de solo lectura.
   { label: 'Comunicados',         icon: HiMegaphone,             path: '/comunicados',   roles: ['admin'] },
-  { label: 'Avisos',              icon: HiBell,                  path: '/notifications', roles: ['admin', 'propietario', 'vigilante', 'tecnico'] },
+  { label: 'Avisos',              icon: HiBell,                  path: '/notifications', roles: ['propietario', 'vigilante', 'tecnico'] },
   { label: 'Configuración',       icon: HiCog6Tooth,             path: '/settings',      roles: ['admin', 'propietario', 'vigilante', 'tecnico'] },
 ]
 
