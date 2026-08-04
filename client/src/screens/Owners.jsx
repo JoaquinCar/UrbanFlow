@@ -116,7 +116,14 @@ function Owners() {
           <ul className="caseta-lista">
             {datos.items.map(p => (
               <li key={p.id} className="caseta-item">
-                <div className="caseta-item-info">
+                {/* La ficha entera abre el detalle: hacer clic en el nombre es
+                    el gesto natural, y antes solo respondía el icono del ojo. */}
+                <button
+                  type="button"
+                  className="caseta-item-info"
+                  onClick={() => setDetalleId(p.id)}
+                  aria-label={`Ver ficha de ${p.nombre_completo}`}
+                >
                   <span className="caseta-item-nombre">{p.nombre_completo}</span>
                   <span className="caseta-item-meta">
                     {p.email}
@@ -127,7 +134,7 @@ function Owners() {
                       ? `Lotes: ${p.lotes.map(l => l.numero).join(', ')}`
                       : 'Sin lote'}
                   </span>
-                </div>
+                </button>
                 <span className="tabla-acciones">
                   <button className="icon-btn" onClick={() => setDetalleId(p.id)} aria-label={`Ver ${p.nombre_completo}`}>
                     <HiEye size={18} />

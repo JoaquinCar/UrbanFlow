@@ -65,6 +65,34 @@
   gap: 0.3rem;
 }
 
+/* Variante clicable: la fila entera abre el detalle.
+   Es un <button> y no un <li> con onClick para que también se pueda llegar con
+   el tabulador y activar con Enter. De ahí que haya que anular los estilos
+   propios del botón. */
+button.caseta-item-info {
+  appearance: none;
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  border-radius: 8px;
+}
+
+button.caseta-item-info:hover .caseta-item-nombre,
+button.caseta-item-info:focus-visible .caseta-item-nombre {
+  color: #101483;
+  text-decoration: underline;
+}
+
+button.caseta-item-info:focus-visible {
+  outline: 2px solid #101483;
+  outline-offset: 3px;
+}
+
 .caseta-item-nombre {
   font-size: 0.95rem;
   font-weight: 600;
